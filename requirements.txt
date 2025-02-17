@@ -6,5 +6,5 @@ beautifulsoup4~=4.12.3
 pillow~=11.0.0
 pycryptodome~=3.21.0
 aiofiles~=24.1.0
-typeguard~=4.4.1
+typeguard~=4.4.2
 lxml~=5.3.0
