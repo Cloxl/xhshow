@@ -1,8 +1,0 @@
-/.idea/
-/test/
-/test/*
-/output.xlsx
-/config.json
-.tmp.json
-.package.json
-.package-lock.json
