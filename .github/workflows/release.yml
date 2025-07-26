@@ -26,21 +26,13 @@ jobs:
       # Check that basic features work and we didn't miss to include crucial files
       - name: Smoke test (wheel)
         run: |
-          uv run --isolated --no-project -p 3.12 --with dist/*.whl -c "
-          from xhshow import Xhshow, CryptoProcessor
-          client = Xhshow()
-          print('✅ Wheel package works!')
-          print(f'Xhshow version: {client.__class__.__module__}')
-          "
+          WHEEL_FILE=$(find dist -name "*.whl" -type f)
+          uv run --isolated --no-project -p 3.12 --with "$WHEEL_FILE" -- python -c "from xhshow import Xhshow, CryptoProcessor; client = Xhshow(); print('Wheel package works'); print('Xhshow module:', client.__class__.__module__)"
       
       - name: Smoke test (source distribution)
         run: |
-          uv run --isolated --no-project -p 3.12 --with dist/*.tar.gz -c "
-          from xhshow import Xhshow, CryptoProcessor
-          client = Xhshow()
-          print('✅ Source distribution works!')
-          print(f'Xhshow version: {client.__class__.__module__}')
-          "
+          TARBALL_FILE=$(find dist -name "*.tar.gz" -type f)
+          uv run --isolated --no-project -p 3.12 --with "$TARBALL_FILE" -- python -c "from xhshow import Xhshow, CryptoProcessor; client = Xhshow(); print('Source distribution works'); print('Xhshow module:', client.__class__.__module__)"
       
       - name: Publish to PyPI
         run: uv publish --trusted-publishing always
