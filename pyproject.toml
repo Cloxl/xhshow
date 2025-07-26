@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "xhshow"
 version = "0.1.0"
-description = "Modern cryptographic utilities with legacy compatibility"
+description = "XHS API signature generator"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -47,11 +47,11 @@ asyncio_mode = "auto"
 
 [tool.black]
 line-length = 88
-target-version = ['py312']
+target-version = ['py310']
 include = '\.pyi?$'
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py310"
 line-length = 88
 
 [tool.ruff.lint]
