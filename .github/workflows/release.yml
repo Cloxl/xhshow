@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      # Publish on any tag starting with a `v`, e.g. v1.2.3
+      - v*
+
+jobs:
+  pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    # Environment and permissions trusted publishing.
+    environment:
+      # Create this environment in the GitHub repository under Settings -> Environments
+      name: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      
+      - name: Build package
+        run: uv build
+      
+      # Check that basic features work and we didn't miss to include crucial files
+      - name: Smoke test (wheel)
+        run: |
+          uv run --isolated --no-project -p 3.12 --with dist/*.whl -c "
+          from xhshow import Xhshow, CryptoProcessor
+          client = Xhshow()
+          print('✅ Wheel package works!')
+          print(f'Xhshow version: {client.__class__.__module__}')
+          "
+      
+      - name: Smoke test (source distribution)
+        run: |
+          uv run --isolated --no-project -p 3.12 --with dist/*.tar.gz -c "
+          from xhshow import Xhshow, CryptoProcessor
+          client = Xhshow()
+          print('✅ Source distribution works!')
+          print(f'Xhshow version: {client.__class__.__module__}')
+          "
+      
+      - name: Publish to PyPI
+        run: uv publish --trusted-publishing always

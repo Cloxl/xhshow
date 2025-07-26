@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev, refactor/* ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+    
+    - name: Run tests
+      run: |
+        uv run pytest tests/ -v --tb=short
+    
+    - name: Run linting and type checking
+      run: |
+        uv run ruff check src/ tests/ --ignore=UP036,E501 --output-format=github
+    
+    - name: Check code formatting
+      run: |
+        uv run ruff format --check src/ tests/
