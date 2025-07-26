@@ -32,7 +32,7 @@ jobs:
     
     - name: Generate version file
       run: |
-        uv run hatch build --clean
+        uv build --wheel
     
     - name: Run tests
       run: |
