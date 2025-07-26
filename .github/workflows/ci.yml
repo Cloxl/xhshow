@@ -30,6 +30,10 @@ jobs:
       run: |
         uv sync --dev
     
+    - name: Generate version file
+      run: |
+        uv run hatch build --clean
+    
     - name: Run tests
       run: |
         uv run pytest tests/ -v --tb=short
