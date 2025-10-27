@@ -63,7 +63,7 @@ class CryptoConfig:
 
     # 签名数据模板
     SIGNATURE_DATA_TEMPLATE = {
-        "x0": "4.2.2",
+        "x0": "4.2.6",
         "x1": "xhs-pc-web",
         "x2": "Windows",
         "x3": "",
