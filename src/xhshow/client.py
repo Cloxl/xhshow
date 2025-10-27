@@ -187,3 +187,48 @@ class Xhshow:
             ValueError: 参数值错误
         """
         return self.sign_xs("POST", uri, a1_value, xsec_appid, payload)
+
+    def decode_x3(self, x3_signature: str) -> bytearray:
+        """
+        解密x3签名（去除mns0101_前缀的签名）
+
+        Args:
+            x3_signature: x3签名字符串（可以包含或不包含 mns0101_ 前缀）
+
+        Returns:
+            bytearray: 解密后的原始字节数组
+
+        Raises:
+            ValueError: 签名格式错误
+        """
+        if x3_signature.startswith(self.config.X3_PREFIX):
+            x3_signature = x3_signature[len(self.config.X3_PREFIX) :]
+
+        b58_decoded = self.crypto_processor.b58encoder.decode_from_b58(x3_signature)
+        xor_reversed = self.crypto_processor.bit_ops.xor_transform_array(
+            list(b58_decoded)
+        )
+
+        return xor_reversed
+
+    def decode_xs(self, xs_signature: str) -> dict[str, Any]:
+        """
+        解密完整的XYS签名
+
+        Args:
+            xs_signature: 完整的签名字符串（可以包含或不包含 XYS_ 前缀）
+
+        Returns:
+            dict: 包含解密后的签名数据，包括x0, x1, x2, x3, x4字段
+
+        Raises:
+            ValueError: 签名格式错误
+            json.JSONDecodeError: JSON解析失败
+        """
+        if xs_signature.startswith(self.config.XYS_PREFIX):
+            xs_signature = xs_signature[len(self.config.XYS_PREFIX) :]
+
+        json_string = self.crypto_processor.b64encoder.decode_from_b64(xs_signature)
+        signature_data = json.loads(json_string)
+
+        return signature_data

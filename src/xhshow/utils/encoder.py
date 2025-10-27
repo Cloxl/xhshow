@@ -32,12 +32,47 @@ class Base58Encoder:
         )
         return "".join(reversed(encoded_characters))
 
+    def decode_from_b58(self, encoded_string: str) -> bytearray:
+        """
+        将Base58字符串解码为字节数据
+
+        Args:
+            encoded_string (str): Base58编码字符串
+
+        Returns:
+            bytearray: 解码后的字节数据
+        """
+        leading_zeros = 0
+        for char in encoded_string:
+            if char == self.config.BASE58_ALPHABET[0]:
+                leading_zeros += 1
+            else:
+                break
+
+        number = 0
+        for char in encoded_string:
+            char_index = self.config.BASE58_ALPHABET.index(char)
+            number = number * self.config.BASE58_BASE + char_index
+
+        byte_array = self._number_to_bytes(number)
+        return bytearray([0] * leading_zeros + byte_array)
+
     def _bytes_to_number(self, input_bytes: bytes | bytearray) -> int:
         """将字节数组转换为数字"""
         result = 0
         for byte_value in input_bytes:
             result = result * self.config.BYTE_SIZE + byte_value
         return result
+
+    def _number_to_bytes(self, number: int) -> list[int]:
+        """将数字转换为字节数组"""
+        if number == 0:
+            return []
+        byte_array = []
+        while number > 0:
+            byte_array.insert(0, number % self.config.BYTE_SIZE)
+            number //= self.config.BYTE_SIZE
+        return byte_array
 
     def _count_leading_zeros(self, input_bytes: bytes | bytearray) -> int:
         """计算前导零的数量"""
@@ -81,3 +116,21 @@ class Base64Encoder:
         )
 
         return standard_encoded_string.translate(translation_table)
+
+    def decode_from_b64(self, encoded_string: str) -> str:
+        """
+        使用自定义的Base64码表来解码字符串
+
+        Args:
+            encoded_string: 使用自定义码表编码的Base64字符串
+
+        Returns:
+            解码后的原始UTF-8字符串
+        """
+        reverse_translation_table = str.maketrans(
+            self.config.CUSTOM_BASE64_ALPHABET, self.config.STANDARD_BASE64_ALPHABET
+        )
+
+        standard_encoded_string = encoded_string.translate(reverse_translation_table)
+        decoded_bytes = base64.b64decode(standard_encoded_string)
+        return decoded_bytes.decode("utf-8")
