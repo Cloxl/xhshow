@@ -229,6 +229,4 @@ class Xhshow:
             xs_signature = xs_signature[len(self.config.XYS_PREFIX) :]
 
         json_string = self.crypto_processor.b64encoder.decode_from_b64(xs_signature)
-        signature_data = json.loads(json_string)
-
-        return signature_data
+        return json.loads(json_string)
