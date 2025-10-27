@@ -63,6 +63,38 @@ signature = client.sign_xs(
 )
 ```
 
+### 解密签名
+
+```python
+from xhshow import Xhshow
+
+client = Xhshow()
+
+# 解密 x3 签名（mns0101_ 前缀）
+x3_signature = "mns0101_Q2vPHtH+lQJYGQfhxG271BIvFFhx..."
+decoded_bytes = client.decode_x3(x3_signature)
+
+# 解密完整的 XYS 签名
+xs_signature = "XYS_2UQhPsHCH0c1Pjh9HjIj2erjwjQhyoPT..."
+decoded_data = client.decode_xs(xs_signature)
+# decoded_data 包含: x0, x1, x2, x3, x4 字段
+```
+
+### 自定义配置
+
+```python
+from xhshow import Xhshow, CryptoConfig
+from dataclasses import replace
+
+custom_config = replace(
+    CryptoConfig(),
+    X3_PREFIX="custom_",
+    SIGNATURE_DATA_TEMPLATE={"x0": "4.2.6", "x1": "xhs-pc-web", ...}
+)
+
+client = Xhshow(config=custom_config)
+```
+
 ## 参数说明
 
 - `uri`: 请求URI（去除https域名和查询参数）
