@@ -205,11 +205,7 @@ class Xhshow:
             x3_signature = x3_signature[len(self.config.X3_PREFIX) :]
 
         b58_decoded = self.crypto_processor.b58encoder.decode_from_b58(x3_signature)
-        xor_reversed = self.crypto_processor.bit_ops.xor_transform_array(
-            list(b58_decoded)
-        )
-
-        return xor_reversed
+        return self.crypto_processor.bit_ops.xor_transform_array(list(b58_decoded))
 
     def decode_xs(self, xs_signature: str) -> dict[str, Any]:
         """
