@@ -1,6 +1,5 @@
 import sys
 
-# Python version compatibility check
 if sys.version_info < (3, 10):
     print(
         f"Error: xhshow requires Python 3.10 or higher. "
@@ -12,7 +11,8 @@ if sys.version_info < (3, 10):
     sys.exit(1)
 
 from .client import Xhshow
+from .config import CryptoConfig
 from .core.crypto import CryptoProcessor
 
 __version__ = "0.1.0"
-__all__ = ["CryptoProcessor", "Xhshow"]
+__all__ = ["CryptoConfig", "CryptoProcessor", "Xhshow"]

@@ -8,8 +8,8 @@ __all__ = ["BitOperations"]
 class BitOperations:
     """位操作和种子变换工具类"""
 
-    def __init__(self):
-        self.config = CryptoConfig()
+    def __init__(self, config: CryptoConfig):
+        self.config = config
 
     def normalize_to_32bit(self, value: int) -> int:
         """

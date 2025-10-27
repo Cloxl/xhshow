@@ -10,8 +10,8 @@ __all__ = ["Base58Encoder"]
 class Base58Encoder:
     """Base58编码器"""
 
-    def __init__(self):
-        self.config = CryptoConfig()
+    def __init__(self, config: CryptoConfig):
+        self.config = config
 
     def encode_to_b58(self, input_bytes: bytes | bytearray) -> str:
         """
@@ -59,8 +59,8 @@ class Base58Encoder:
 
 
 class Base64Encoder:
-    def __init__(self):
-        self.config = CryptoConfig()
+    def __init__(self, config: CryptoConfig):
+        self.config = config
 
     def encode_to_b64(self, data_to_encode: str) -> str:
         """

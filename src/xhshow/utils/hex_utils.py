@@ -8,8 +8,8 @@ __all__ = ["HexProcessor"]
 class HexProcessor:
     """十六进制数据处理工具类"""
 
-    def __init__(self):
-        self.config = CryptoConfig()
+    def __init__(self, config: CryptoConfig):
+        self.config = config
 
     def hex_string_to_bytes(self, hex_string: str) -> list[int]:
         """
