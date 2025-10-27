@@ -1,6 +1,7 @@
 """编码相关模块"""
 
 import base64
+import binascii
 
 from ..config import CryptoConfig
 
@@ -41,6 +42,9 @@ class Base58Encoder:
 
         Returns:
             bytearray: 解码后的字节数据
+
+        Raises:
+            ValueError: 包含非法Base58字符
         """
         leading_zeros = 0
         for char in encoded_string:
@@ -51,7 +55,12 @@ class Base58Encoder:
 
         number = 0
         for char in encoded_string:
-            char_index = self.config.BASE58_ALPHABET.index(char)
+            try:
+                char_index = self.config.BASE58_ALPHABET.index(char)
+            except ValueError:
+                raise ValueError(
+                    f"Invalid Base58 character: '{char}' not in alphabet"
+                ) from None
             number = number * self.config.BASE58_BASE + char_index
 
         byte_array = self._number_to_bytes(number)
@@ -126,11 +135,17 @@ class Base64Encoder:
 
         Returns:
             解码后的原始UTF-8字符串
+
+        Raises:
+            ValueError: Base64解码失败
         """
         reverse_translation_table = str.maketrans(
             self.config.CUSTOM_BASE64_ALPHABET, self.config.STANDARD_BASE64_ALPHABET
         )
 
         standard_encoded_string = encoded_string.translate(reverse_translation_table)
-        decoded_bytes = base64.b64decode(standard_encoded_string)
+        try:
+            decoded_bytes = base64.b64decode(standard_encoded_string)
+        except (binascii.Error, ValueError) as e:
+            raise ValueError("Invalid Base64 input: unable to decode string") from e
         return decoded_bytes.decode("utf-8")

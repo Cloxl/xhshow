@@ -218,11 +218,15 @@ class Xhshow:
             dict: 包含解密后的签名数据，包括x0, x1, x2, x3, x4字段
 
         Raises:
-            ValueError: 签名格式错误
-            json.JSONDecodeError: JSON解析失败
+            ValueError: 签名格式错误或JSON解析失败
         """
         if xs_signature.startswith(self.config.XYS_PREFIX):
             xs_signature = xs_signature[len(self.config.XYS_PREFIX) :]
 
         json_string = self.crypto_processor.b64encoder.decode_from_b64(xs_signature)
-        return json.loads(json_string)
+        try:
+            signature_data = json.loads(json_string)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid signature: JSON decode failed - {e}") from e
+
+        return signature_data
