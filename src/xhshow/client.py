@@ -2,6 +2,7 @@ import hashlib
 import json
 from typing import Any, Literal
 
+from .config import CryptoConfig
 from .core.crypto import CryptoProcessor
 from .utils.validators import (
     validate_get_signature_params,
@@ -15,8 +16,9 @@ __all__ = ["Xhshow"]
 class Xhshow:
     """小红书请求客户端封装"""
 
-    def __init__(self):
-        self.crypto_processor = CryptoProcessor()
+    def __init__(self, config: CryptoConfig | None = None):
+        self.config = config or CryptoConfig()
+        self.crypto_processor = CryptoProcessor(self.config)
 
     def _build_content_string(
         self, method: str, uri: str, payload: dict[str, Any] | None = None

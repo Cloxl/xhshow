@@ -10,12 +10,12 @@ __all__ = ["CryptoProcessor"]
 
 
 class CryptoProcessor:
-    def __init__(self):
-        self.config = CryptoConfig()
-        self.bit_ops = BitOperations()
-        self.b58encoder = Base58Encoder()
-        self.b64encoder = Base64Encoder()
-        self.hex_processor = HexProcessor()
+    def __init__(self, config: CryptoConfig | None = None):
+        self.config = config or CryptoConfig()
+        self.bit_ops = BitOperations(self.config)
+        self.b58encoder = Base58Encoder(self.config)
+        self.b64encoder = Base64Encoder(self.config)
+        self.hex_processor = HexProcessor(self.config)
         self.random_gen = RandomGenerator()
 
     def _encode_timestamp(self, ts: int, randomize_first: bool = True) -> list[int]:

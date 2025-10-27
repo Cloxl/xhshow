@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 __all__ = ["CryptoConfig"]
 
 
+@dataclass(frozen=True)
 class CryptoConfig:
     """加密处理相关配置常量"""
 
