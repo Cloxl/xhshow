@@ -43,6 +43,8 @@ class Xhshow:
             if not payload:
                 return uri
             else:
+                # XHS signature algorithm requires only '=' to be encoded as '%3D',
+                # other characters (including ',') should remain unencoded
                 params = [
                     f"{key}={(','.join(str(v) for v in value) if isinstance(value, list | tuple) else (str(value) if value is not None else '')).replace('=', '%3D')}"  # noqa: E501
                     for key, value in payload.items()

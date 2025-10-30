@@ -47,6 +47,12 @@ def build_url(base_url: str, params: dict | None = None) -> str:
     """
     Build complete URL with query parameters (handles parameter escaping)
 
+    IMPORTANT: This function uses XHS platform-specific encoding rules.
+    Only '=' characters are encoded as '%3D'. Other special characters
+    (including ',') are NOT encoded, as required by XHS signature algorithm.
+    DO NOT use urllib.parse.urlencode as it would encode additional characters
+    and break the signature verification.
+
     Args:
         base_url: Base URL (can include or exclude protocol/host)
         params: Query parameters dictionary
@@ -60,6 +66,15 @@ def build_url(base_url: str, params: dict | None = None) -> str:
 
         >>> build_url("/api/path", {"a": "1", "b": "2"})
         '/api/path?a=1&b=2'
+
+        >>> build_url("/api/path", {"tags": ["tech", "python"]})
+        '/api/path?tags=tech,python'
+
+        >>> build_url("/api/path?existing=1", {"new": "2"})
+        '/api/path?existing=1&new=2'
+
+        >>> build_url("/api/path?", {"key": "value"})
+        '/api/path?key=value'
     """
     if not base_url or not isinstance(base_url, str):
         raise ValueError("base_url must be a non-empty string")
@@ -76,10 +91,19 @@ def build_url(base_url: str, params: dict | None = None) -> str:
         else:
             formatted_value = ""
 
+        # XHS platform requires only '=' to be encoded as '%3D'
+        # Other special characters must remain unencoded for signature matching
         encoded_value = formatted_value.replace("=", "%3D")
         query_parts.append(f"{key}={encoded_value}")
 
     query_string = "&".join(query_parts)
-    separator = "&" if "?" in base_url else "?"
+
+    # Determine correct separator based on URL structure
+    if "?" not in base_url:
+        separator = "?"
+    elif base_url.endswith(("?", "&")):
+        separator = ""
+    else:
+        separator = "&"
 
     return f"{base_url}{separator}{query_string}"
