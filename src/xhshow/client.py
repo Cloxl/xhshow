@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from .config import CryptoConfig
 from .core.crypto import CryptoProcessor
+from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
     validate_get_signature_params,
     validate_post_signature_params,
@@ -118,6 +119,8 @@ class Xhshow:
             TypeError: Parameter type error
             ValueError: Parameter value error
         """
+        uri = extract_uri(uri)
+
         signature_data = self.crypto_processor.config.SIGNATURE_DATA_TEMPLATE.copy()
 
         content_string = self._build_content_string(method, uri, payload)
@@ -232,3 +235,22 @@ class Xhshow:
             raise ValueError(f"Invalid signature: JSON decode failed - {e}") from e
 
         return signature_data
+
+    def build_url(self, base_url: str, params: dict[str, Any] | None = None) -> str:
+        """
+        Build complete URL with query parameters (convenience method)
+
+        Args:
+            base_url: Base URL (can include or exclude protocol/host)
+            params: Query parameters dictionary
+
+        Returns:
+            str: Complete URL with properly encoded query string
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.build_url("https://api.example.com/path", {"key": "value=test"})
+            'https://api.example.com/path?key=value%3Dtest'
+        """
+        return build_url(base_url, params)
+
