@@ -38,7 +38,20 @@ class CryptoConfig:
 
     # Payload construction constants
     VERSION_BYTES = [119, 104, 96, 41]  # Version identifier bytes
-    FIXED_SEPARATOR_BYTES = [16, 0, 0, 0, 15, 5, 0, 0, 47, 1, 0, 0]  # Fixed separator bytes
+    FIXED_SEPARATOR_BYTES = [
+        16,
+        0,
+        0,
+        0,
+        15,
+        5,
+        0,
+        0,
+        47,
+        1,
+        0,
+        0,
+    ]  # Fixed separator bytes
     RANDOM_BYTE_COUNT = 4  # Random byte count
     FIXED_INT_VALUE_1 = 15  # Fixed integer value 1
     FIXED_INT_VALUE_2 = 1291  # Fixed integer value 2

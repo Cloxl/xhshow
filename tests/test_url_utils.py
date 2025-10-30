@@ -113,4 +113,3 @@ class TestXhshowClientUrlMethods:
             params={"num": "30"},
         )
         assert signature.startswith("XYS_")
-
