@@ -113,3 +113,39 @@ class TestXhshowClientUrlMethods:
             params={"num": "30"},
         )
         assert signature.startswith("XYS_")
+
+    def test_client_sign_with_empty_uri(self):
+        client = Xhshow()
+        with pytest.raises(ValueError, match="uri cannot be empty"):
+            client.sign_xs_get(
+                uri="",
+                a1_value="test_a1_value",
+                params={"num": "30"},
+            )
+
+    def test_client_sign_with_none_uri(self):
+        client = Xhshow()
+        with pytest.raises(TypeError, match="uri must be str"):
+            client.sign_xs_get(
+                uri=None,  # type: ignore
+                a1_value="test_a1_value",
+                params={"num": "30"},
+            )
+
+    def test_client_sign_with_empty_a1_value(self):
+        client = Xhshow()
+        with pytest.raises(ValueError, match="a1_value cannot be empty"):
+            client.sign_xs_get(
+                uri="/api/sns/web/v1/user_posted",
+                a1_value="",
+                params={"num": "30"},
+            )
+
+    def test_client_sign_with_invalid_params(self):
+        client = Xhshow()
+        with pytest.raises(TypeError, match="payload must be dict or None"):
+            client.sign_xs_get(
+                uri="/api/sns/web/v1/user_posted",
+                a1_value="test_a1_value",
+                params="invalid",  # type: ignore
+            )
