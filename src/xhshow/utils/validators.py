@@ -1,4 +1,4 @@
-"""参数验证工具"""
+"""Parameter validation utilities"""
 
 from collections.abc import Callable
 from functools import wraps
@@ -16,11 +16,11 @@ __all__ = [
 
 
 class RequestSignatureValidator:
-    """请求签名参数验证器"""
+    """Request signature parameter validator"""
 
     @staticmethod
     def validate_method(method: Any) -> HttpMethod:
-        """验证HTTP方法参数"""
+        """Validate HTTP method parameter"""
         if not isinstance(method, str):
             raise TypeError(f"method must be str, got {type(method).__name__}")
 
@@ -32,7 +32,7 @@ class RequestSignatureValidator:
 
     @staticmethod
     def validate_uri(uri: Any) -> str:
-        """验证URI参数"""
+        """Validate URI parameter"""
         if not isinstance(uri, str):
             raise TypeError(f"uri must be str, got {type(uri).__name__}")
 
@@ -43,7 +43,7 @@ class RequestSignatureValidator:
 
     @staticmethod
     def validate_a1_value(a1_value: Any) -> str:
-        """验证a1值参数"""
+        """Validate a1 value parameter"""
         if not isinstance(a1_value, str):
             raise TypeError(f"a1_value must be str, got {type(a1_value).__name__}")
 
@@ -54,7 +54,7 @@ class RequestSignatureValidator:
 
     @staticmethod
     def validate_xsec_appid(xsec_appid: Any) -> str:
-        """验证xsec_appid参数"""
+        """Validate xsec_appid parameter"""
         if not isinstance(xsec_appid, str):
             raise TypeError(f"xsec_appid must be str, got {type(xsec_appid).__name__}")
 
@@ -65,13 +65,12 @@ class RequestSignatureValidator:
 
     @staticmethod
     def validate_payload(payload: Any) -> dict[str, Any] | None:
-        """验证payload参数"""
+        """Validate payload parameter"""
         if payload is not None and not isinstance(payload, dict):
             raise TypeError(
                 f"payload must be dict or None, got {type(payload).__name__}"
             )
 
-        # 验证payload键类型
         if payload is not None:
             for key in payload.keys():
                 if not isinstance(key, str):
@@ -85,13 +84,13 @@ class RequestSignatureValidator:
 
 def validate_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
     """
-    参数验证装饰器，用于验证sign_xs方法的参数
+    Parameter validation decorator for sign_xs method
 
     Args:
-        func: 被装饰的方法
+        func: Decorated method
 
     Returns:
-        装饰后的方法
+        Decorated method
     """
 
     @wraps(func)
@@ -105,14 +104,12 @@ def validate_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
     ):
         validator = RequestSignatureValidator()
 
-        # 验证和标准化参数
         validated_method = validator.validate_method(method)
         validated_uri = validator.validate_uri(uri)
         validated_a1_value = validator.validate_a1_value(a1_value)
         validated_xsec_appid = validator.validate_xsec_appid(xsec_appid)
         validated_payload = validator.validate_payload(payload)
 
-        # 调用原方法
         return func(
             self,
             validated_method,
@@ -127,13 +124,13 @@ def validate_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
 
 def validate_get_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
     """
-    参数验证装饰器，用于验证sign_xs_get方法的参数
+    Parameter validation decorator for sign_xs_get method
 
     Args:
-        func: 被装饰的方法
+        func: Decorated method
 
     Returns:
-        装饰后的方法
+        Decorated method
     """
 
     @wraps(func)
@@ -146,13 +143,11 @@ def validate_get_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
     ):
         validator = RequestSignatureValidator()
 
-        # 验证和标准化参数
         validated_uri = validator.validate_uri(uri)
         validated_a1_value = validator.validate_a1_value(a1_value)
         validated_xsec_appid = validator.validate_xsec_appid(xsec_appid)
         validated_params = validator.validate_payload(params)
 
-        # 调用原方法
         return func(
             self,
             validated_uri,
@@ -166,13 +161,13 @@ def validate_get_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
 
 def validate_post_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
     """
-    参数验证装饰器，用于验证sign_xs_post方法的参数
+    Parameter validation decorator for sign_xs_post method
 
     Args:
-        func: 被装饰的方法
+        func: Decorated method
 
     Returns:
-        装饰后的方法
+        Decorated method
     """
 
     @wraps(func)
@@ -185,13 +180,11 @@ def validate_post_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
     ):
         validator = RequestSignatureValidator()
 
-        # 验证和标准化参数
         validated_uri = validator.validate_uri(uri)
         validated_a1_value = validator.validate_a1_value(a1_value)
         validated_xsec_appid = validator.validate_xsec_appid(xsec_appid)
         validated_payload = validator.validate_payload(payload)
 
-        # 调用原方法
         return func(
             self,
             validated_uri,

@@ -1,4 +1,4 @@
-"""位操作和种子变换模块"""
+"""Bit operations and seed transformation module"""
 
 from ..config import CryptoConfig
 
@@ -6,32 +6,32 @@ __all__ = ["BitOperations"]
 
 
 class BitOperations:
-    """位操作和种子变换工具类"""
+    """Bit operations and seed transformation utility class"""
 
     def __init__(self, config: CryptoConfig):
         self.config = config
 
     def normalize_to_32bit(self, value: int) -> int:
         """
-        将值标准化为32位
+        Normalize value to 32-bit
 
         Args:
-            value (int): 输入值
+            value (int): Input value
 
         Returns:
-            int: 32位标准化值
+            int: 32-bit normalized value
         """
         return value & self.config.MAX_32BIT
 
     def to_signed_32bit(self, unsigned_value: int) -> int:
         """
-        将无符号32位值转换为有符号32位值
+        Convert unsigned 32-bit value to signed 32-bit value
 
         Args:
-            unsigned_value (int): 无符号32位值
+            unsigned_value (int): Unsigned 32-bit value
 
         Returns:
-            int: 有符号32位值
+            int: Signed 32-bit value
         """
         if unsigned_value > self.config.MAX_SIGNED_32BIT:
             return unsigned_value - 0x100000000
@@ -39,13 +39,13 @@ class BitOperations:
 
     def compute_seed_value(self, seed_32bit: int) -> int:
         """
-        计算种子值变换
+        Compute seed value transformation
 
         Args:
-            seed_32bit (int): 32位种子值
+            seed_32bit (int): 32-bit seed value
 
         Returns:
-            int: 变换后的有符号32位整数
+            int: Transformed signed 32-bit integer
         """
         normalized_seed = self.normalize_to_32bit(seed_32bit)
 
@@ -65,13 +65,13 @@ class BitOperations:
 
     def xor_transform_array(self, source_integers: list[int]) -> bytearray:
         """
-        对整数数组进行XOR变换
+        Perform XOR transformation on integer array
 
         Args:
-            source_integers (list[int]): 源整数数组
+            source_integers (list[int]): Source integer array
 
         Returns:
-            bytearray: 变换后的字节数组
+            bytearray: Transformed byte array
         """
         result_bytes = bytearray(len(source_integers))
 

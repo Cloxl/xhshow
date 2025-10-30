@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from .config import CryptoConfig
 from .core.crypto import CryptoProcessor
+from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
     validate_get_signature_params,
     validate_post_signature_params,
@@ -14,7 +15,7 @@ __all__ = ["Xhshow"]
 
 
 class Xhshow:
-    """小红书请求客户端封装"""
+    """Xiaohongshu request client wrapper"""
 
     def __init__(self, config: CryptoConfig | None = None):
         self.config = config or CryptoConfig()
@@ -24,15 +25,15 @@ class Xhshow:
         self, method: str, uri: str, payload: dict[str, Any] | None = None
     ) -> str:
         """
-        构建内容字符串（用于MD5计算和签名生成）
+        Build content string (used for MD5 calculation and signature generation)
 
         Args:
-            method: 请求方法 ("GET" 或 "POST")
-            uri: 请求URI（不包含查询参数）
-            payload: 请求参数
+            method: Request method ("GET" or "POST")
+            uri: Request URI (without query parameters)
+            payload: Request parameters
 
         Returns:
-            str: 构建的内容字符串
+            str: Built content string
         """
         payload = payload or {}
 
@@ -42,21 +43,23 @@ class Xhshow:
             if not payload:
                 return uri
             else:
+                # XHS signature algorithm requires only '=' to be encoded as '%3D',
+                # other characters (including ',') should remain unencoded
                 params = [
-                    f"{key}={','.join(str(v) for v in value) if isinstance(value, list | tuple) else (str(value) if value is not None else '')}"  # noqa: E501
+                    f"{key}={(','.join(str(v) for v in value) if isinstance(value, list | tuple) else (str(value) if value is not None else '')).replace('=', '%3D')}"  # noqa: E501
                     for key, value in payload.items()
                 ]
                 return f"{uri}?{'&'.join(params)}"
 
     def _generate_d_value(self, content: str) -> str:
         """
-        从内容字符串生成d值（MD5哈希）
+        Generate d value (MD5 hash) from content string
 
         Args:
-            content: 已构建的内容字符串
+            content: Built content string
 
         Returns:
-            str: 32位小写MD5哈希值
+            str: 32-character lowercase MD5 hash
         """
         return hashlib.md5(content.encode("utf-8")).hexdigest()
 
@@ -68,26 +71,23 @@ class Xhshow:
         string_param: str = "",
     ) -> str:
         """
-        构建签名
+        Build signature
 
         Args:
-            d_value: d值（MD5哈希）
-            a1_value: cookie 中的a1值
-            xsec_appid: 应用标识符
-            string_param: 字符串参数
+            d_value: d value (MD5 hash)
+            a1_value: a1 value from cookies
+            xsec_appid: Application identifier
+            string_param: String parameter
 
         Returns:
-            str: Base58编码的签名
+            str: Base58 encoded signature
         """
-        # 构建载荷数组
         payload_array = self.crypto_processor.build_payload_array(
             d_value, a1_value, xsec_appid, string_param
         )
 
-        # XOR变换
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
 
-        # Base58编码
         return self.crypto_processor.b58encoder.encode_to_b58(xor_result)
 
     @validate_signature_params
@@ -100,30 +100,33 @@ class Xhshow:
         payload: dict[str, Any] | None = None,
     ) -> str:
         """
-        生成请求签名（支持GET和POST）
+        Generate request signature (supports GET and POST)
 
         Args:
-            method: 请求方法 ("GET" 或 "POST")
-            uri: 请求URI(去除https域名 去除查询参数)
-            a1_value: cookie中的a1值
-            xsec_appid: 应用标识符 默认为`xhs-pc-web`
-            payload: 请求参数
-                - GET请求时：params值
-                - POST请求时：payload值
+            method: Request method ("GET" or "POST")
+            uri: Request URI or full URL
+                - URI only: "/api/sns/web/v1/user_posted"
+                - Full URL: "https://edith.xiaohongshu.com/api/sns/web/v1/user_posted"
+                - Full URL with query: "https://edith.xiaohongshu.com/api/sns/web/v1/user_posted?num=30"
+            a1_value: a1 value from cookies
+            xsec_appid: Application identifier, defaults to `xhs-pc-web`
+            payload: Request parameters
+                - GET request: params value
+                - POST request: payload value
 
         Returns:
-            str: 完整的签名字符串
+            str: Complete signature string
 
         Raises:
-            TypeError: 参数类型错误
-            ValueError: 参数值错误
+            TypeError: Parameter type error
+            ValueError: Parameter value error
         """
+        uri = extract_uri(uri)
+
         signature_data = self.crypto_processor.config.SIGNATURE_DATA_TEMPLATE.copy()
 
-        # 构建内容字符串
         content_string = self._build_content_string(method, uri, payload)
 
-        # 生成d值和x3签名
         d_value = self._generate_d_value(content_string)
         signature_data["x3"] = (
             self.crypto_processor.config.X3_PREFIX
@@ -145,20 +148,22 @@ class Xhshow:
         params: dict[str, Any] | None = None,
     ) -> str:
         """
-        生成GET请求签名（便捷方法）
+        Generate GET request signature (convenience method)
 
         Args:
-            uri: 请求URI(去除https域名 去除查询参数)
-            a1_value: cookie中的a1值
-            xsec_appid: 应用标识符 默认为`xhs-pc-web`
-            params: GET请求参数
+            uri: Request URI or full URL
+                - URI only: "/api/sns/web/v1/user_posted"
+                - Full URL: "https://edith.xiaohongshu.com/api/sns/web/v1/user_posted"
+            a1_value: a1 value from cookies
+            xsec_appid: Application identifier, defaults to `xhs-pc-web`
+            params: GET request parameters
 
         Returns:
-            str: 完整的签名字符串
+            str: Complete signature string
 
         Raises:
-            TypeError: 参数类型错误
-            ValueError: 参数值错误
+            TypeError: Parameter type error
+            ValueError: Parameter value error
         """
         return self.sign_xs("GET", uri, a1_value, xsec_appid, params)
 
@@ -171,35 +176,37 @@ class Xhshow:
         payload: dict[str, Any] | None = None,
     ) -> str:
         """
-        生成POST请求签名（便捷方法）
+        Generate POST request signature (convenience method)
 
         Args:
-            uri: 请求URI(去除https域名 去除查询参数)
-            a1_value: cookie中的a1值
-            xsec_appid: 应用标识符 默认为`xhs-pc-web`
-            payload: POST请求体数据
+            uri: Request URI or full URL
+                - URI only: "/api/sns/web/v1/login"
+                - Full URL: "https://edith.xiaohongshu.com/api/sns/web/v1/login"
+            a1_value: a1 value from cookies
+            xsec_appid: Application identifier, defaults to `xhs-pc-web`
+            payload: POST request body data
 
         Returns:
-            str: 完整的签名字符串
+            str: Complete signature string
 
         Raises:
-            TypeError: 参数类型错误
-            ValueError: 参数值错误
+            TypeError: Parameter type error
+            ValueError: Parameter value error
         """
         return self.sign_xs("POST", uri, a1_value, xsec_appid, payload)
 
     def decode_x3(self, x3_signature: str) -> bytearray:
         """
-        解密x3签名（去除mns0101_前缀的签名）
+        Decrypt x3 signature (signature without mns0101_ prefix)
 
         Args:
-            x3_signature: x3签名字符串（可以包含或不包含 mns0101_ 前缀）
+            x3_signature: x3 signature string (can include or exclude mns0101_ prefix)
 
         Returns:
-            bytearray: 解密后的原始字节数组
+            bytearray: Decrypted original byte array
 
         Raises:
-            ValueError: 签名格式错误
+            ValueError: Invalid signature format
         """
         if x3_signature.startswith(self.config.X3_PREFIX):
             x3_signature = x3_signature[len(self.config.X3_PREFIX) :]
@@ -209,16 +216,16 @@ class Xhshow:
 
     def decode_xs(self, xs_signature: str) -> dict[str, Any]:
         """
-        解密完整的XYS签名
+        Decrypt complete XYS signature
 
         Args:
-            xs_signature: 完整的签名字符串（可以包含或不包含 XYS_ 前缀）
+            xs_signature: Complete signature string (can include or exclude XYS_ prefix)
 
         Returns:
-            dict: 包含解密后的签名数据，包括x0, x1, x2, x3, x4字段
+            dict: Decrypted signature data including x0, x1, x2, x3, x4 fields
 
         Raises:
-            ValueError: 签名格式错误或JSON解析失败
+            ValueError: Invalid signature format or JSON parsing failed
         """
         if xs_signature.startswith(self.config.XYS_PREFIX):
             xs_signature = xs_signature[len(self.config.XYS_PREFIX) :]
@@ -230,3 +237,38 @@ class Xhshow:
             raise ValueError(f"Invalid signature: JSON decode failed - {e}") from e
 
         return signature_data
+
+    def build_url(self, base_url: str, params: dict[str, Any] | None = None) -> str:
+        """
+        Build complete URL with query parameters (convenience method)
+
+        Args:
+            base_url: Base URL (can include or exclude protocol/host)
+            params: Query parameters dictionary
+
+        Returns:
+            str: Complete URL with properly encoded query string
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.build_url("https://api.example.com/path", {"key": "value=test"})
+            'https://api.example.com/path?key=value%3Dtest'
+        """
+        return build_url(base_url, params)
+
+    def build_json_body(self, payload: dict[str, Any]) -> str:
+        """
+        Build JSON body string for POST request (convenience method)
+
+        Args:
+            payload: Request payload dictionary
+
+        Returns:
+            str: JSON string with compact format and unicode characters preserved
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.build_json_body({"username": "test", "password": "123456"})
+            '{"username":"test","password":"123456"}'
+        """
+        return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
