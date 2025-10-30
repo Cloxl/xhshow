@@ -1,4 +1,4 @@
-"""十六进制处理模块"""
+"""Hexadecimal processing module"""
 
 from ..config import CryptoConfig
 
@@ -6,20 +6,20 @@ __all__ = ["HexProcessor"]
 
 
 class HexProcessor:
-    """十六进制数据处理工具类"""
+    """Hexadecimal data processing utility class"""
 
     def __init__(self, config: CryptoConfig):
         self.config = config
 
     def hex_string_to_bytes(self, hex_string: str) -> list[int]:
         """
-        将十六进制字符串转换为字节数组
+        Convert hexadecimal string to byte array
 
         Args:
-            hex_string (str): 十六进制字符串
+            hex_string (str): Hexadecimal string
 
         Returns:
-            list[int]: 字节数组
+            list[int]: Byte array
         """
         byte_values = []
         for i in range(0, len(hex_string), self.config.HEX_CHUNK_SIZE):
@@ -29,17 +29,17 @@ class HexProcessor:
 
     def process_hex_parameter(self, hex_string: str, xor_key: int) -> list[int]:
         """
-        处理十六进制参数
+        Process hexadecimal parameter
 
         Args:
-            hex_string (str): 32字符十六进制字符串
-            xor_key (int): XOR密钥
+            hex_string (str): 32-character hexadecimal string
+            xor_key (int): XOR key
 
         Returns:
-            list[int]: 处理后的8字节整数列表
+            list[int]: Processed 8-byte integer list
 
         Raises:
-            ValueError: 当hex_string长度不为32时
+            ValueError: When hex_string length is not 32
         """
         if len(hex_string) != self.config.EXPECTED_HEX_LENGTH:
             raise ValueError(
