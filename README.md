@@ -3,11 +3,9 @@
 <div align="center">
 
 [![PyPI version](https://badge.fury.io/py/xhshow.svg)](https://badge.fury.io/py/xhshow)
-[![Python](https://img.shields.io/pypi/pyversions/xhshow.svg)](https://pypi.org/project/xhshow/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://pypi.org/project/xhshow/)
 [![License](https://img.shields.io/github/license/Cloxl/xhshow.svg)](https://github.com/Cloxl/xhshow/blob/main/LICENSE)
-[![CI](https://github.com/Cloxl/xhshow/workflows/CI/badge.svg)](https://github.com/Cloxl/xhshow/actions)
 [![Downloads](https://pepy.tech/badge/xhshow)](https://pepy.tech/project/xhshow)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 小红书请求签名生成库，支持GET和POST请求的x-s签名生成。
 
@@ -25,65 +23,57 @@ pip install xhshow
 
 ## 使用方法
 
-### 推荐使用便捷方法
+### 基本用法
 
 ```python
 from xhshow import Xhshow
+import requests
 
 client = Xhshow()
 
 # GET请求签名
 signature = client.sign_xs_get(
-    uri="/api/sns/web/v1/user_posted",
+    uri="https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",  # v0.1.3及后续版本支持自动提取uri
+    # uri="/api/sns/web/v1/user_posted"  # v0.1.2及以前版本需要主动提取uri
     a1_value="your_a1_cookie_value",
     params={"num": "30", "cursor": "", "user_id": "123"}
 )
 
 # POST请求签名
 signature = client.sign_xs_post(
-    uri="/api/sns/web/v1/login", 
+    uri="https://edith.xiaohongshu.com/api/sns/web/v1/login",
     a1_value="your_a1_cookie_value",
     payload={"username": "test", "password": "123456"}
 )
-```
 
-### 通用方法
-
-```python
-from xhshow import Xhshow
-
-client = Xhshow()
-
-# 通用签名方法
-signature = client.sign_xs(
-    method="GET",  # 或 "POST"
-    uri="/api/sns/web/v1/user_posted",
-    a1_value="your_a1_cookie_value",
-    payload={"num": "30", "cursor": "", "user_id": "123"}
+# 构建符合xhs平台的GET请求链接
+full_url = client.build_url(
+    base_url="https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",
+    params={"num": "30", "cursor": "", "user_id": "123"}
 )
+response = requests.get(full_url, headers=headers, cookies=cookies)
+
+# 构建符合xhs平台的POST请求body
+json_body = client.build_json_body(
+    payload={"username": "test", "password": "123456"}
+)
+response = requests.post(url, data=json_body, headers=headers, cookies=cookies)
 ```
 
 ### 解密签名
 
 ```python
-from xhshow import Xhshow
-
-client = Xhshow()
-
-# 解密 x3 签名（mns0101_ 前缀）
-x3_signature = "mns0101_Q2vPHtH+lQJYGQfhxG271BIvFFhx..."
-decoded_bytes = client.decode_x3(x3_signature)
+# 解密 x3 签名
+decoded_bytes = client.decode_x3("mns0101_Q2vPHtH+lQJYGQfhxG271BIvFFhx...")
 
 # 解密完整的 XYS 签名
-xs_signature = "XYS_2UQhPsHCH0c1Pjh9HjIj2erjwjQhyoPT..."
-decoded_data = client.decode_xs(xs_signature)
-# decoded_data 包含: x0, x1, x2, x3, x4 字段
+decoded_data = client.decode_xs("XYS_2UQhPsHCH0c1Pjh9HjIj2erjwjQhyoPT...")
 ```
 
 ### 自定义配置
 
 ```python
-from xhshow import Xhshow, CryptoConfig
+from xhshow import CryptoConfig
 from dataclasses import replace
 
 custom_config = replace(
