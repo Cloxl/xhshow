@@ -254,3 +254,19 @@ class Xhshow:
         """
         return build_url(base_url, params)
 
+    def build_json_body(self, payload: dict[str, Any]) -> str:
+        """
+        Build JSON body string for POST request (convenience method)
+
+        Args:
+            payload: Request payload dictionary
+
+        Returns:
+            str: JSON string with compact format and unicode characters preserved
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.build_json_body({"username": "test", "password": "123456"})
+            '{"username":"test","password":"123456"}'
+        """
+        return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
