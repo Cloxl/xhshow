@@ -137,6 +137,10 @@ git commit -m "feat(client): 添加新功能描述"
 git push origin feat/your-feature
 ```
 
+## 功能建议
+
+如果您有任何功能建议或想法，欢迎在 [#60](https://github.com/Cloxl/xhshow/issues/60) 中提交。我们期待您的宝贵建议，共同打造更好的 xhshow！
+
 ## License
 
 [MIT](LICENSE)
