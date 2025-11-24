@@ -59,6 +59,41 @@ class TestCryptoProcessor:
         assert isinstance(result, str)
         assert len(result) > 0
 
+        # Test round-trip encode/decode
+        decoded = self.crypto.b64encoder.decode(result)
+        assert decoded == test_string
+
+    def test_base64_decoder_invalid_input(self):
+        """测试Base64解码对非法输入的异常处理"""
+        invalid_inputs = [
+            "!!!invalid!!!",  # Invalid characters
+            "abc",  # Invalid length (not multiple of 4)
+            "YWJj*Zw==",  # Invalid character
+        ]
+
+        for invalid in invalid_inputs:
+            with pytest.raises(ValueError):
+                self.crypto.b64encoder.decode(invalid)
+
+    def test_base64_x3_encoder(self):
+        """测试x3签名Base64编码"""
+        test_bytes = bytearray([1, 2, 3, 4, 5])
+        result = self.crypto.b64encoder.encode_x3(test_bytes)
+
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+        # Test round-trip encode/decode
+        decoded = self.crypto.b64encoder.decode_x3(result)
+        assert decoded == test_bytes
+
+    def test_base64_x3_decoder_invalid_input(self):
+        """测试x3签名Base64解码对非法输入的异常处理"""
+        # Test with truly invalid Base64 after alphabet translation
+        with pytest.raises(ValueError):
+            # String with incorrect padding
+            self.crypto.b64encoder.decode_x3("abc")
+
     def test_hex_processor(self):
         """测试十六进制处理"""
         hex_string = "d41d8cd98f00b204e9800998ecf8427e"

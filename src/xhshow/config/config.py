@@ -15,9 +15,11 @@ class CryptoConfig:
     STANDARD_BASE64_ALPHABET = (
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     )
+    # Custom alphabet for XYS signature encoding
     CUSTOM_BASE64_ALPHABET = (
         "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5"
     )
+    # X3 signature alphabet (currently same as CUSTOM, may diverge in future)
     X3_BASE64_ALPHABET = (
         "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5"
     )

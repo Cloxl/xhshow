@@ -89,15 +89,9 @@ class Base64Encoder:
 
         Returns:
             str: Base64 encoded string with X3 custom alphabet
-
-        Raises:
-            ValueError: Base64 encoding failed
         """
-        try:
-            standard_encoded_bytes = base64.b64encode(input_bytes)
-            standard_encoded_string = standard_encoded_bytes.decode("utf-8")
-        except (binascii.Error, ValueError) as e:
-            raise ValueError("Failed to encode to Base64") from e
+        standard_encoded_bytes = base64.b64encode(input_bytes)
+        standard_encoded_string = standard_encoded_bytes.decode("utf-8")
 
         translation_table = str.maketrans(
             self.config.STANDARD_BASE64_ALPHABET, self.config.X3_BASE64_ALPHABET
