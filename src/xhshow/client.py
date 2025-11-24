@@ -211,11 +211,8 @@ class Xhshow:
         if x3_signature.startswith(self.config.X3_PREFIX):
             x3_signature = x3_signature[len(self.config.X3_PREFIX) :]
 
-        decoded_bytes = self.crypto_processor.b64encoder.decode_x3(
-            x3_signature
-        )
+        decoded_bytes = self.crypto_processor.b64encoder.decode_x3(x3_signature)
         return self.crypto_processor.bit_ops.xor_transform_array(list(decoded_bytes))
-
 
     def decode_xs(self, xs_signature: str) -> dict[str, Any]:
         """

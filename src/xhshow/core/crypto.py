@@ -17,9 +17,7 @@ class CryptoProcessor:
         self.hex_processor = HexProcessor(self.config)
         self.random_gen = RandomGenerator()
 
-    def _encode_timestamp(
-        self, ts: int, randomize_first: bool = True
-    ) -> list[int]:
+    def _encode_timestamp(self, ts: int, randomize_first: bool = True) -> list[int]:
         """
         Encode 8-byte timestamp in little-endian, XOR with 41,
         first byte can be randomized
