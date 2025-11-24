@@ -21,7 +21,7 @@ class RandomGenerator:
         Returns:
             list[int]: 随机字节数组
         """
-        return [random.randint(0, self.config.BYTE_SIZE - 1) for _ in range(byte_count)]
+        return [random.randint(0, 255) for _ in range(byte_count)]
 
     def generate_random_byte_in_range(self, min_val: int, max_val: int) -> int:
         """
