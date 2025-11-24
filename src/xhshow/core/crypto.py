@@ -2,7 +2,7 @@ import time
 
 from ..config import CryptoConfig
 from ..utils.bit_ops import BitOperations
-from ..utils.encoder import Base58Encoder, Base64Encoder
+from ..utils.encoder import Base64Encoder
 from ..utils.hex_utils import HexProcessor
 from ..utils.random_gen import RandomGenerator
 
@@ -13,7 +13,6 @@ class CryptoProcessor:
     def __init__(self, config: CryptoConfig | None = None):
         self.config = config or CryptoConfig()
         self.bit_ops = BitOperations(self.config)
-        self.b58encoder = Base58Encoder(self.config)
         self.b64encoder = Base64Encoder(self.config)
         self.hex_processor = HexProcessor(self.config)
         self.random_gen = RandomGenerator()

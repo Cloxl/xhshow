@@ -11,16 +11,16 @@ class CryptoConfig:
     MAX_32BIT = 0xFFFFFFFF  # 32-bit unsigned integer maximum value mask
     MAX_SIGNED_32BIT = 0x7FFFFFFF  # 32-bit signed integer maximum value
 
-    # Base58 encoding constants
-    BASE58_ALPHABET = "NOPQRStuvwxWXYZabcyz012DEFTKLMdefghijkl4563GHIJBC7mnop89+/AUVqrsOPQefghijkABCDEFGuvwz0123456789xy"  # Base58 encoding character table
+    # Base64 encoding constants
     STANDARD_BASE64_ALPHABET = (
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     )
     CUSTOM_BASE64_ALPHABET = (
         "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5"
     )
-    BASE58_BASE = 58  # Base58 radix
-    BYTE_SIZE = 256  # Byte size (2^8)
+    X3_BASE64_ALPHABET = (
+        "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5"
+    )
 
     # XOR key
     HEX_KEY = "af572b95ca65b2d9ec76bb5d2e97cb653299cc663399cc663399cce673399cce6733190c06030100000000008040209048241289c4e271381c0e0703018040a05028148ac56231180c0683c16030984c2693c964b259ac56abd5eaf5fafd7e3f9f4f279349a4d2e9743a9d4e279349a4d2e9f47a3d1e8f47239148a4d269341a8d4623110884422190c86432994ca6d3e974baddee773b1d8e47a35128148ac5623198cce6f3f97c3e1f8f47a3d168b45aad562b158ac5e2f1f87c3e9f4f279349a4d269b45aad56"
@@ -80,9 +80,9 @@ class CryptoConfig:
         "x1": "xhs-pc-web",
         "x2": "Windows",
         "x3": "",
-        "x4": "object",
+        "x4": "",
     }
 
     # Prefix constants
-    X3_PREFIX = "mns0101_"
+    X3_PREFIX = "mns0301_"
     XYS_PREFIX = "XYS_"

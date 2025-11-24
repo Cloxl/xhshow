@@ -48,19 +48,13 @@ class TestCryptoProcessor:
 
     def test_base58_encoder(self):
         """测试Base58编码"""
-        test_data = bytearray([1, 2, 3, 4, 5])
-        result = self.crypto.b58encoder.encode_to_b58(test_data)
-
-        assert isinstance(result, str)
-        assert len(result) > 0
-        # 验证Base58字符
-        for char in result:
-            assert char in self.crypto.config.BASE58_ALPHABET
+        # Base58已移除,此测试不再需要
+        pass
 
     def test_base64_encoder(self):
         """测试自定义Base64编码"""
         test_string = "Hello, World!"
-        result = self.crypto.b64encoder.encode_to_b64(test_string)
+        result = self.crypto.b64encoder.encode(test_string)
 
         assert isinstance(result, str)
         assert len(result) > 0
@@ -163,9 +157,6 @@ class TestXhshow:
 
         assert isinstance(result, str)
         assert len(result) > 0
-        # 验证Base58字符
-        for char in result:
-            assert char in self.client.crypto_processor.config.BASE58_ALPHABET
 
     def test_sign_xs_get(self):
         """测试GET请求签名生成"""
