@@ -1,5 +1,3 @@
-import time
-
 from ..config import CryptoConfig
 from ..utils.bit_ops import BitOperations
 from ..utils.encoder import Base64Encoder
@@ -17,18 +15,6 @@ class CryptoProcessor:
         self.hex_processor = HexProcessor(self.config)
         self.random_gen = RandomGenerator()
 
-    def _encode_timestamp(self, ts: int, randomize_first: bool = True) -> list[int]:
-        """
-        Encode 8-byte timestamp in little-endian, XOR with 41,
-        first byte can be randomized
-        """
-        key = [self.config.TIMESTAMP_XOR_KEY] * 8
-        arr = self._int_to_le_bytes(ts, 8)
-        encoded = [a ^ key[i] for i, a in enumerate(arr)]
-        if randomize_first:
-            encoded[0] = self.random_gen.generate_random_byte_in_range(0, 255)
-        return encoded
-
     def _int_to_le_bytes(self, val: int, length: int = 4) -> list[int]:
         """Convert integer to little-endian byte array"""
         arr = []
@@ -42,14 +28,6 @@ class CryptoProcessor:
         buf = s.encode("utf-8")
         return [len(buf)] + list(buf)
 
-    def _build_environment_bytes(self) -> list[int]:
-        """Build environment byte array"""
-        return (
-            [self.config.ENV_STATIC_BYTES[0]]
-            + [self.random_gen.generate_random_byte_in_range(10, 254)]
-            + self.config.ENV_STATIC_BYTES[1:]
-        )
-
     def build_payload_array(
         self,
         hex_parameter: str,
@@ -58,57 +36,77 @@ class CryptoProcessor:
         string_param: str = "",
     ) -> list[int]:
         """
-        Build payload array
+        Build payload array (t.js version - exact match)
 
         Args:
-            hex_parameter (str): 32-character hexadecimal parameter
+            hex_parameter (str): 32-character hexadecimal parameter (MD5 hash)
             a1_value (str): a1 value from cookies
             app_identifier (str): Application identifier, default "xhs-pc-web"
-            string_param (str): String parameter
+            string_param (str): String parameter (used for URI length calculation)
 
         Returns:
-            list[int]: Complete payload byte array
+            list[int]: Complete payload byte array (124 bytes)
         """
-        rand_num = self.random_gen.generate_random_int()
-        ts = int(time.time() * 1000)
-        startup_ts = ts - (
-            self.config.STARTUP_TIME_OFFSET_MIN
-            + self.random_gen.generate_random_byte_in_range(
-                0,
-                self.config.STARTUP_TIME_OFFSET_MAX
-                - self.config.STARTUP_TIME_OFFSET_MIN,
-            )
-        )
+        payload = []
 
-        arr = []
-        arr.extend(self.config.VERSION_BYTES)
+        # Magic header
+        payload.extend([119, 104, 96, 41])
 
-        rand_bytes = self._int_to_le_bytes(rand_num, 4)
-        arr.extend(rand_bytes)
+        # Random seed
+        seed = self.random_gen.generate_random_int()
+        seed_bytes = self._int_to_le_bytes(seed, 4)
+        payload.extend(seed_bytes)
+        seed_byte_0 = seed_bytes[0]
 
-        xor_key = rand_bytes[0]
+        # Environment fingerprint A
+        payload.extend(self.config.ENV_FINGERPRINT_A)
 
-        arr.extend(self._encode_timestamp(ts, True))
-        arr.extend(self._int_to_le_bytes(startup_ts, 8))
-        arr.extend(self._int_to_le_bytes(self.config.FIXED_INT_VALUE_1))
-        arr.extend(self._int_to_le_bytes(self.config.FIXED_INT_VALUE_2))
+        # Environment fingerprint B
+        payload.extend(self.config.ENV_FINGERPRINT_B)
 
-        string_param_length = len(string_param.encode("utf-8"))
-        arr.extend(self._int_to_le_bytes(string_param_length))
+        # Sequence counter
+        payload.extend(self._int_to_le_bytes(self.config.SEQUENCE_VALUE, 4))
 
+        # Window props length
+        payload.extend(self._int_to_le_bytes(self.config.WINDOW_PROPS_LENGTH, 4))
+
+        # URI length
+        uri_length = len(string_param)
+        payload.extend(self._int_to_le_bytes(uri_length, 4))
+
+        # MD5 XOR segment
         md5_bytes = bytes.fromhex(hex_parameter)
-        xor_md5_bytes = [b ^ xor_key for b in md5_bytes]
-        arr.extend(xor_md5_bytes[:8])
+        for i in range(8):
+            payload.append(md5_bytes[i] ^ seed_byte_0)
 
-        arr.extend(self._str_to_len_prefixed_bytes(a1_value))
-        arr.extend(self._str_to_len_prefixed_bytes(app_identifier))
+        # A1 length
+        payload.append(52)
 
-        arr.extend(
-            [
-                self.config.ENV_STATIC_BYTES[0],
-                self.random_gen.generate_random_byte_in_range(0, 255),
-            ]
-            + self.config.ENV_STATIC_BYTES[1:]
-        )
+        # A1 content
+        a1_bytes = a1_value.encode("utf-8")
+        if len(a1_bytes) > 52:
+            a1_bytes = a1_bytes[:52]
+        elif len(a1_bytes) < 52:
+            a1_bytes = a1_bytes + b"\x00" * (52 - len(a1_bytes))
+        payload.extend(a1_bytes)
 
-        return arr
+        # Source length
+        payload.append(10)
+
+        # Source content
+        source_bytes = app_identifier.encode("utf-8")
+        if len(source_bytes) > 10:
+            source_bytes = source_bytes[:10]
+        elif len(source_bytes) < 10:
+            source_bytes = source_bytes + b"\x00" * (10 - len(source_bytes))
+        payload.extend(source_bytes)
+
+        # Version
+        payload.append(1)
+
+        # Checksum
+        checksum = self.config.CHECKSUM_BASE.copy()
+        checksum[0] = checksum[0] ^ seed_byte_0
+        payload.extend(checksum)
+
+        return payload
