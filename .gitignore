@@ -156,3 +156,13 @@ Desktop.ini
 
 *.txt
 _version.py
+node_modules/
+
+# Local test files (root directory only)
+/*.js
+/*.py
+!setup.py
+package.json
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
