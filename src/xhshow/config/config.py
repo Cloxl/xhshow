@@ -36,19 +36,21 @@ class CryptoConfig:
     CHECKSUM_BASE: list[int] = field(default_factory=lambda: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     # Signature data template
-    SIGNATURE_DATA_TEMPLATE: dict[str, str] = field(default_factory=lambda: {
-        "x0": "4.2.6",
-        "x1": "xhs-pc-web",
-        "x2": "Windows",
-        "x3": "",
-        "x4": "",
-    })
+    SIGNATURE_DATA_TEMPLATE: dict[str, str] = field(
+        default_factory=lambda: {
+            "x0": "4.2.6",
+            "x1": "xhs-pc-web",
+            "x2": "Windows",
+            "x3": "",
+            "x4": "",
+        }
+    )
 
     # Prefix constants
     X3_PREFIX: str = "mns0301_"
     XYS_PREFIX: str = "XYS_"
 
-    def with_overrides(self, **kwargs: Any) -> 'CryptoConfig':
+    def with_overrides(self, **kwargs: Any) -> "CryptoConfig":
         """
         Create a new config instance with overridden values
 
@@ -67,7 +69,7 @@ class CryptoConfig:
         return replace(self, **kwargs)
 
     @classmethod
-    def from_xs_signature(cls, xs_signature: str) -> 'CryptoConfig':
+    def from_xs_signature(cls, xs_signature: str) -> "CryptoConfig":
         """
         [EXPERIMENTAL] Extract fingerprint config from existing XS signature
 
@@ -93,7 +95,7 @@ class CryptoConfig:
             "It will be removed in future versions. "
             "Do NOT rely on this in production code.",
             FutureWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
         # TODO: Remove this method after fingerprint generation is solved
@@ -119,7 +121,7 @@ class CryptoConfig:
         # Step 1: Determine signature type and extract x3
         if xs_signature.startswith(cls.XYS_PREFIX):
             # Remove XYS_ prefix
-            encoded_data = xs_signature[len(cls.XYS_PREFIX):]
+            encoded_data = xs_signature[len(cls.XYS_PREFIX) :]
 
             # Decode outer base64 using custom alphabet
             decoded_json = cls._decode_custom_base64_to_string(
@@ -137,15 +139,13 @@ class CryptoConfig:
             # Already an x3 signature
             x3_signature = xs_signature
         else:
-            raise ValueError(
-                f"Invalid signature format. Must start with '{cls.XYS_PREFIX}' or '{cls.X3_PREFIX}'"
-            )
+            raise ValueError(f"Invalid signature format. Must start with '{cls.XYS_PREFIX}' or '{cls.X3_PREFIX}'")
 
         # Step 2: Remove x3 prefix
         if not x3_signature.startswith(cls.X3_PREFIX):
             raise ValueError(f"x3 signature must start with '{cls.X3_PREFIX}'")
 
-        x3_encoded = x3_signature[len(cls.X3_PREFIX):]
+        x3_encoded = x3_signature[len(cls.X3_PREFIX) :]
 
         # Step 3: Decode x3 base64 using X3 alphabet (returns bytes)
         payload_encrypted = cls._decode_custom_base64_to_bytes(
@@ -170,8 +170,8 @@ class CryptoConfig:
             "VERSION_BYTES": list(payload_bytes[0:4]),
             "ENV_FINGERPRINT_A": list(payload_bytes[8:16]),
             "ENV_FINGERPRINT_B": list(payload_bytes[16:24]),
-            "SEQUENCE_VALUE": int.from_bytes(payload_bytes[24:28], byteorder='little'),
-            "WINDOW_PROPS_LENGTH": int.from_bytes(payload_bytes[28:32], byteorder='little'),
+            "SEQUENCE_VALUE": int.from_bytes(payload_bytes[24:28], byteorder="little"),
+            "WINDOW_PROPS_LENGTH": int.from_bytes(payload_bytes[28:32], byteorder="little"),
             "CHECKSUM_BASE": checksum_raw,
         }
 
@@ -186,7 +186,7 @@ class CryptoConfig:
 
         # Decode using standard base64
         decoded_bytes = base64.b64decode(standard_encoded)
-        return decoded_bytes.decode('utf-8')
+        return decoded_bytes.decode("utf-8")
 
     @staticmethod
     def _decode_custom_base64_to_bytes(encoded: str, custom_alphabet: str, standard_alphabet: str) -> bytes:

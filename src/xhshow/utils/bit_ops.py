@@ -54,12 +54,8 @@ class BitOperations:
         shift_12_bits = normalized_seed >> 12
         shift_10_bits = normalized_seed >> 10
 
-        xor_masked_result = (shift_15_bits & ~shift_13_bits) | (
-            shift_13_bits & ~shift_15_bits
-        )
-        shifted_result = (
-            (xor_masked_result ^ shift_12_bits ^ shift_10_bits) << 31
-        ) & self.config.MAX_32BIT
+        xor_masked_result = (shift_15_bits & ~shift_13_bits) | (shift_13_bits & ~shift_15_bits)
+        shifted_result = ((xor_masked_result ^ shift_12_bits ^ shift_10_bits) << 31) & self.config.MAX_32BIT
 
         return self.to_signed_32bit(shifted_result)
 

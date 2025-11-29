@@ -26,9 +26,7 @@ class Base64Encoder:
         standard_encoded_bytes = base64.b64encode(data_bytes)
         standard_encoded_string = standard_encoded_bytes.decode("utf-8")
 
-        translation_table = str.maketrans(
-            self.config.STANDARD_BASE64_ALPHABET, self.config.CUSTOM_BASE64_ALPHABET
-        )
+        translation_table = str.maketrans(self.config.STANDARD_BASE64_ALPHABET, self.config.CUSTOM_BASE64_ALPHABET)
 
         return standard_encoded_string.translate(translation_table)
 
@@ -69,9 +67,7 @@ class Base64Encoder:
         Raises:
             ValueError: Base64 decoding failed
         """
-        reverse_translation_table = str.maketrans(
-            self.config.X3_BASE64_ALPHABET, self.config.STANDARD_BASE64_ALPHABET
-        )
+        reverse_translation_table = str.maketrans(self.config.X3_BASE64_ALPHABET, self.config.STANDARD_BASE64_ALPHABET)
 
         standard_encoded_string = encoded_string.translate(reverse_translation_table)
         try:
@@ -93,8 +89,6 @@ class Base64Encoder:
         standard_encoded_bytes = base64.b64encode(input_bytes)
         standard_encoded_string = standard_encoded_bytes.decode("utf-8")
 
-        translation_table = str.maketrans(
-            self.config.STANDARD_BASE64_ALPHABET, self.config.X3_BASE64_ALPHABET
-        )
+        translation_table = str.maketrans(self.config.STANDARD_BASE64_ALPHABET, self.config.X3_BASE64_ALPHABET)
 
         return standard_encoded_string.translate(translation_table)

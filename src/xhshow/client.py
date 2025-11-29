@@ -21,9 +21,7 @@ class Xhshow:
         self.config = config or CryptoConfig()
         self.crypto_processor = CryptoProcessor(self.config)
 
-    def _build_content_string(
-        self, method: str, uri: str, payload: dict[str, Any] | None = None
-    ) -> str:
+    def _build_content_string(self, method: str, uri: str, payload: dict[str, Any] | None = None) -> str:
         """
         Build content string (used for MD5 calculation and signature generation)
 
@@ -82,9 +80,7 @@ class Xhshow:
         Returns:
             str: Base64 encoded signature
         """
-        payload_array = self.crypto_processor.build_payload_array(
-            d_value, a1_value, xsec_appid, string_param
-        )
+        payload_array = self.crypto_processor.build_payload_array(d_value, a1_value, xsec_appid, string_param)
 
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
 
@@ -128,15 +124,11 @@ class Xhshow:
         content_string = self._build_content_string(method, uri, payload)
 
         d_value = self._generate_d_value(content_string)
-        signature_data["x3"] = (
-            self.crypto_processor.config.X3_PREFIX
-            + self._build_signature(d_value, a1_value, xsec_appid, content_string)
+        signature_data["x3"] = self.crypto_processor.config.X3_PREFIX + self._build_signature(
+            d_value, a1_value, xsec_appid, content_string
         )
-        return (
-            self.crypto_processor.config.XYS_PREFIX
-            + self.crypto_processor.b64encoder.encode(
-                json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
-            )
+        return self.crypto_processor.config.XYS_PREFIX + self.crypto_processor.b64encoder.encode(
+            json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
         )
 
     @validate_get_signature_params
