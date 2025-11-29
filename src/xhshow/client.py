@@ -88,7 +88,7 @@ class Xhshow:
 
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
 
-        return self.crypto_processor.b64encoder.encode_x3(xor_result)
+        return self.crypto_processor.b64encoder.encode_x3(xor_result[:124])
 
     @validate_signature_params
     def sign_xs(
