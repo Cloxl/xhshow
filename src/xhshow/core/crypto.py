@@ -79,11 +79,7 @@ class CryptoProcessor:
         seed_byte_0 = seed_bytes[0]
 
         timestamp = time.time()
-        payload.extend(
-            self.env_fingerprint_a(
-                int(timestamp * 1000), self.config.ENV_FINGERPRINT_XOR_KEY
-            )
-        )
+        payload.extend(self.env_fingerprint_a(int(timestamp * 1000), self.config.ENV_FINGERPRINT_XOR_KEY))
 
         time_offset = self.random_gen.generate_random_byte_in_range(
             self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
