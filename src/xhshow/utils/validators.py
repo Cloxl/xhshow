@@ -67,17 +67,12 @@ class RequestSignatureValidator:
     def validate_payload(payload: Any) -> dict[str, Any] | None:
         """Validate payload parameter"""
         if payload is not None and not isinstance(payload, dict):
-            raise TypeError(
-                f"payload must be dict or None, got {type(payload).__name__}"
-            )
+            raise TypeError(f"payload must be dict or None, got {type(payload).__name__}")
 
         if payload is not None:
             for key in payload.keys():
                 if not isinstance(key, str):
-                    raise TypeError(
-                        f"payload keys must be str, got {type(key).__name__} "
-                        f"for key '{key}'"
-                    )
+                    raise TypeError(f"payload keys must be str, got {type(key).__name__} for key '{key}'")
 
         return payload
 

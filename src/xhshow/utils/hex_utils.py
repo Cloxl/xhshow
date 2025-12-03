@@ -42,11 +42,7 @@ class HexProcessor:
             ValueError: When hex_string length is not 32
         """
         if len(hex_string) != self.config.EXPECTED_HEX_LENGTH:
-            raise ValueError(
-                f"hex parameter must be {self.config.EXPECTED_HEX_LENGTH} characters"
-            )
+            raise ValueError(f"hex parameter must be {self.config.EXPECTED_HEX_LENGTH} characters")
 
         byte_values = self.hex_string_to_bytes(hex_string)
-        return [byte_val ^ xor_key for byte_val in byte_values][
-            : self.config.OUTPUT_BYTE_COUNT
-        ]
+        return [byte_val ^ xor_key for byte_val in byte_values][: self.config.OUTPUT_BYTE_COUNT]

@@ -21,9 +21,7 @@ class Xhshow:
         self.config = config or CryptoConfig()
         self.crypto_processor = CryptoProcessor(self.config)
 
-    def _build_content_string(
-        self, method: str, uri: str, payload: dict[str, Any] | None = None
-    ) -> str:
+    def _build_content_string(self, method: str, uri: str, payload: dict[str, Any] | None = None) -> str:
         """
         Build content string (used for MD5 calculation and signature generation)
 
@@ -80,15 +78,13 @@ class Xhshow:
             string_param: String parameter
 
         Returns:
-            str: Base58 encoded signature
+            str: Base64 encoded signature
         """
-        payload_array = self.crypto_processor.build_payload_array(
-            d_value, a1_value, xsec_appid, string_param
-        )
+        payload_array = self.crypto_processor.build_payload_array(d_value, a1_value, xsec_appid, string_param)
 
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
 
-        return self.crypto_processor.b58encoder.encode_to_b58(xor_result)
+        return self.crypto_processor.b64encoder.encode_x3(xor_result[:124])
 
     @validate_signature_params
     def sign_xs(
@@ -128,15 +124,11 @@ class Xhshow:
         content_string = self._build_content_string(method, uri, payload)
 
         d_value = self._generate_d_value(content_string)
-        signature_data["x3"] = (
-            self.crypto_processor.config.X3_PREFIX
-            + self._build_signature(d_value, a1_value, xsec_appid, content_string)
+        signature_data["x3"] = self.crypto_processor.config.X3_PREFIX + self._build_signature(
+            d_value, a1_value, xsec_appid, content_string
         )
-        return (
-            self.crypto_processor.config.XYS_PREFIX
-            + self.crypto_processor.b64encoder.encode_to_b64(
-                json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
-            )
+        return self.crypto_processor.config.XYS_PREFIX + self.crypto_processor.b64encoder.encode(
+            json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
         )
 
     @validate_get_signature_params
@@ -197,10 +189,10 @@ class Xhshow:
 
     def decode_x3(self, x3_signature: str) -> bytearray:
         """
-        Decrypt x3 signature (signature without mns0101_ prefix)
+        Decrypt x3 signature (Base64 format)
 
         Args:
-            x3_signature: x3 signature string (can include or exclude mns0101_ prefix)
+            x3_signature: x3 signature string (can include or exclude prefix)
 
         Returns:
             bytearray: Decrypted original byte array
@@ -211,8 +203,8 @@ class Xhshow:
         if x3_signature.startswith(self.config.X3_PREFIX):
             x3_signature = x3_signature[len(self.config.X3_PREFIX) :]
 
-        b58_decoded = self.crypto_processor.b58encoder.decode_from_b58(x3_signature)
-        return self.crypto_processor.bit_ops.xor_transform_array(list(b58_decoded))
+        decoded_bytes = self.crypto_processor.b64encoder.decode_x3(x3_signature)
+        return self.crypto_processor.bit_ops.xor_transform_array(list(decoded_bytes))
 
     def decode_xs(self, xs_signature: str) -> dict[str, Any]:
         """
@@ -230,7 +222,7 @@ class Xhshow:
         if xs_signature.startswith(self.config.XYS_PREFIX):
             xs_signature = xs_signature[len(self.config.XYS_PREFIX) :]
 
-        json_string = self.crypto_processor.b64encoder.decode_from_b64(xs_signature)
+        json_string = self.crypto_processor.b64encoder.decode(xs_signature)
         try:
             signature_data = json.loads(json_string)
         except json.JSONDecodeError as e:

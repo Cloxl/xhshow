@@ -54,12 +54,8 @@ class BitOperations:
         shift_12_bits = normalized_seed >> 12
         shift_10_bits = normalized_seed >> 10
 
-        xor_masked_result = (shift_15_bits & ~shift_13_bits) | (
-            shift_13_bits & ~shift_15_bits
-        )
-        shifted_result = (
-            (xor_masked_result ^ shift_12_bits ^ shift_10_bits) << 31
-        ) & self.config.MAX_32BIT
+        xor_masked_result = (shift_15_bits & ~shift_13_bits) | (shift_13_bits & ~shift_15_bits)
+        shifted_result = ((xor_masked_result ^ shift_12_bits ^ shift_10_bits) << 31) & self.config.MAX_32BIT
 
         return self.to_signed_32bit(shifted_result)
 
@@ -74,10 +70,13 @@ class BitOperations:
             bytearray: Transformed byte array
         """
         result_bytes = bytearray(len(source_integers))
+        key_bytes = bytes.fromhex(self.config.HEX_KEY)
+        key_length = len(key_bytes)
 
         for index in range(len(source_integers)):
-            result_bytes[index] = (
-                source_integers[index] ^ bytes.fromhex(self.config.HEX_KEY)[index]
-            ) & 0xFF
+            if index < key_length:
+                result_bytes[index] = (source_integers[index] ^ key_bytes[index]) & 0xFF
+            else:
+                result_bytes[index] = source_integers[index] & 0xFF
 
         return result_bytes
