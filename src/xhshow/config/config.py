@@ -73,7 +73,8 @@ class CryptoConfig:
 
         Examples:
             >>> config = CryptoConfig().with_overrides(
-            ...     SEQUENCE_VALUE=20,
+            ...     SEQUENCE_VALUE_MIN=20,
+            ...     SEQUENCE_VALUE_MAX=60,
             ...     XYS_PREFIX="CUSTOM_"
             ... )
         """
