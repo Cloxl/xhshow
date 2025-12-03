@@ -1,3 +1,6 @@
+import struct
+import time
+
 from ..config import CryptoConfig
 from ..utils.bit_ops import BitOperations
 from ..utils.encoder import Base64Encoder
@@ -28,6 +31,25 @@ class CryptoProcessor:
         buf = s.encode("utf-8")
         return [len(buf)] + list(buf)
 
+    def env_fingerprint_a(self, ts: int, xor_key: int) -> list[int]:
+        """Generate environment fingerprint A with checksum"""
+        data = bytearray(struct.pack("<Q", ts))
+
+        sum1 = sum(data[1:5])
+        sum2 = sum(data[5:8])
+
+        mark = ((sum1 & 0xFF) + sum2) & 0xFF
+        data[0] = mark
+
+        for i in range(len(data)):
+            data[i] ^= xor_key
+
+        return list(data)
+
+    def env_fingerprint_b(self, ts: int) -> list[int]:
+        """Generate simple environment fingerprint B (no encryption)"""
+        return list(struct.pack("<Q", ts))
+
     def build_payload_array(
         self,
         hex_parameter: str,
@@ -49,26 +71,35 @@ class CryptoProcessor:
         """
         payload = []
 
-        # Magic header
-        payload.extend([119, 104, 96, 41])
+        payload.extend(self.config.VERSION_BYTES)
 
-        # Random seed
         seed = self.random_gen.generate_random_int()
         seed_bytes = self._int_to_le_bytes(seed, 4)
         payload.extend(seed_bytes)
         seed_byte_0 = seed_bytes[0]
 
-        # Environment fingerprint A
-        payload.extend(self.config.ENV_FINGERPRINT_A)
+        timestamp = time.time()
+        payload.extend(
+            self.env_fingerprint_a(
+                int(timestamp * 1000), self.config.ENV_FINGERPRINT_XOR_KEY
+            )
+        )
 
-        # Environment fingerprint B
-        payload.extend(self.config.ENV_FINGERPRINT_B)
+        time_offset = self.random_gen.generate_random_byte_in_range(
+            self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
+            self.config.ENV_FINGERPRINT_TIME_OFFSET_MAX,
+        )
+        payload.extend(self.env_fingerprint_b(int((timestamp - time_offset) * 1000)))
 
-        # Sequence counter
-        payload.extend(self._int_to_le_bytes(self.config.SEQUENCE_VALUE, 4))
+        sequence_value = self.random_gen.generate_random_byte_in_range(
+            self.config.SEQUENCE_VALUE_MIN, self.config.SEQUENCE_VALUE_MAX
+        )
+        payload.extend(self._int_to_le_bytes(sequence_value, 4))
 
-        # Window props length
-        payload.extend(self._int_to_le_bytes(self.config.WINDOW_PROPS_LENGTH, 4))
+        window_props_length = self.random_gen.generate_random_byte_in_range(
+            self.config.WINDOW_PROPS_LENGTH_MIN, self.config.WINDOW_PROPS_LENGTH_MAX
+        )
+        payload.extend(self._int_to_le_bytes(window_props_length, 4))
 
         # URI length
         uri_length = len(string_param)
@@ -101,12 +132,10 @@ class CryptoProcessor:
             source_bytes = source_bytes + b"\x00" * (10 - len(source_bytes))
         payload.extend(source_bytes)
 
-        # Version
         payload.append(1)
 
-        # Checksum
-        checksum = self.config.CHECKSUM_BASE.copy()
-        checksum[0] = checksum[0] ^ seed_byte_0
-        payload.extend(checksum)
+        payload.append(self.config.CHECKSUM_VERSION)
+        payload.append(seed_byte_0 ^ self.config.CHECKSUM_XOR_KEY)
+        payload.extend(self.config.CHECKSUM_FIXED_TAIL)
 
         return payload
