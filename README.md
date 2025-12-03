@@ -73,13 +73,13 @@ decoded_data = client.decode_xs("XYS_2UQhPsHCH0c1Pjh9HjIj2erjwjQhyoPT...")
 ### 自定义配置
 
 ```python
-from xhshow import CryptoConfig
-from dataclasses import replace
+from xhshow import CryptoConfig, Xhshow
 
-custom_config = replace(
-    CryptoConfig(),
+custom_config = CryptoConfig().with_overrides(
     X3_PREFIX="custom_",
-    SIGNATURE_DATA_TEMPLATE={"x0": "4.2.6", "x1": "xhs-pc-web", ...}
+    SIGNATURE_DATA_TEMPLATE={"x0": "4.2.6", "x1": "xhs-pc-web", "x2": "Windows", "x3": "", "x4": ""},
+    SEQUENCE_VALUE_MIN=20,
+    SEQUENCE_VALUE_MAX=60
 )
 
 client = Xhshow(config=custom_config)
