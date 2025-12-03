@@ -6,41 +6,41 @@ __all__ = ["RandomGenerator"]
 
 
 class RandomGenerator:
-    """随机数生成工具类"""
+    """Random number generator utility"""
 
     def __init__(self):
         self.config = CryptoConfig()
 
     def generate_random_bytes(self, byte_count: int) -> list[int]:
         """
-        生成指定长度的随机字节数组
+        Generate random byte array
 
         Args:
-            byte_count (int): 需要生成的字节数量
+            byte_count (int): Number of bytes to generate
 
         Returns:
-            list[int]: 随机字节数组
+            list[int]: Random byte array
         """
         return [random.randint(0, 255) for _ in range(byte_count)]
 
     def generate_random_byte_in_range(self, min_val: int, max_val: int) -> int:
         """
-        生成指定范围内的随机字节
+        Generate random integer in range
 
         Args:
-            min_val (int): 最小值
-            max_val (int): 最大值
+            min_val (int): Minimum value
+            max_val (int): Maximum value
 
         Returns:
-            int: 指定范围内的随机整数
+            int: Random integer in specified range
         """
         return random.randint(min_val, max_val)
 
     def generate_random_int(self) -> int:
         """
-        生成4字节随机整数
+        Generate 32-bit random integer
 
         Returns:
-            int: 32位随机整数
+            int: Random 32-bit integer
         """
         return random.randint(0, self.config.MAX_32BIT)
