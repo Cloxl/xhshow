@@ -7,13 +7,14 @@ __all__ = ["CryptoConfig"]
 @dataclass(frozen=True)
 class CryptoConfig:
     """Configuration constants for cryptographic operations"""
+
     # Gid encrypt parameters
     DES_KEY = "zbp30y86"
     GID_URL = "https://as.xiaohongshu.com/api/sec/v1/shield/webprofile"
     DATA_PALTFORM = "Windows"
     DATA_SVN = "2"
     DATA_SDK_VERSION = "4.2.6"
-    DATA_webBuild = '5.0.3'
+    DATA_webBuild = "5.0.3"
 
     # Bitwise operation constants
     MAX_32BIT: int = 0xFFFFFFFF
@@ -95,12 +96,14 @@ class CryptoConfig:
             "x8": "",
             "x9": -596800761,
             "x10": 0,
-            "x11": "normal"
+            "x11": "normal",
         }
     )
 
-    PUBLIC_USERAGENT: str = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                             "Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0")
+    PUBLIC_USERAGENT: str = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
+    )
 
     def with_overrides(self, **kwargs: Any) -> "CryptoConfig":
         """

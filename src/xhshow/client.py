@@ -1,14 +1,14 @@
 import hashlib
 import json
 import time
-from typing import Any, Literal
 from http.cookies import SimpleCookie
+from typing import Any, Literal
 
 from .config import CryptoConfig
 from .core.crc32_encrypt import CRC32
 from .core.crypto import CryptoProcessor
-from .utils.random_gen import RandomGenerator
 from .utils.generate_fingerprint import XhsFpGenerator
+from .utils.random_gen import RandomGenerator
 from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
     validate_get_signature_params,
@@ -163,17 +163,17 @@ class Xhshow:
             cookie_dict = {k: morsel.value for k, morsel in ck.items()}
 
         gfp = XhsFpGenerator(self.config)
-        a1_value = cookie_dict['a1']
+        a1_value = cookie_dict["a1"]
         fingerprint = gfp.get_fingerprint(cookies=cookie_dict, user_agent=self.crypto_processor.config.PUBLIC_USERAGENT)
         b1 = gfp.generate_b1(fingerprint)
 
         x9 = CRC32.crc32_js_int(b1)
         sign_struct = CryptoConfig.SIGNATURE_XSCOMMON_TEMPLATE
-        sign_struct['x5'] = a1_value
-        sign_struct['x8'] = b1
-        sign_struct['x9'] = x9
+        sign_struct["x5"] = a1_value
+        sign_struct["x8"] = b1
+        sign_struct["x9"] = x9
         sign_json = json.dumps(sign_struct, separators=(",", ":"), ensure_ascii=False)
-        sign_list = list(sign_json.encode('utf-8'))
+        sign_list = list(sign_json.encode("utf-8"))
         xs_common = self.crypto_processor.b64encoder.custom_to_b64(sign_list)
         return xs_common
 

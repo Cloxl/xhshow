@@ -2,8 +2,8 @@
 
 import base64
 import binascii
+from collections.abc import Iterable
 
-from typing import Iterable
 from ..config import CryptoConfig
 
 __all__ = ["Base64Encoder"]
@@ -26,15 +26,13 @@ class Base64Encoder:
         """
         if isinstance(data_to_encode, str):
             b = data_to_encode.encode("utf-8")
-        elif isinstance(data_to_encode, (bytes, bytearray, memoryview)):
+        elif isinstance(data_to_encode, bytes | bytearray | memoryview):
             b = bytes(data_to_encode)
         else:
             try:
-                b = bytes((int(x) & 0xFF for x in data_to_encode))  # type: ignore[arg-type]
+                b = bytes(int(x) & 0xFF for x in data_to_encode)  # type: ignore[arg-type]
             except TypeError as e:
-                raise TypeError(
-                    f"unsupported type: {type(data_to_encode)} (expected bytes/str/Iterable[int])"
-                ) from e
+                raise TypeError(f"unsupported type: {type(data_to_encode)} (expected bytes/str/Iterable[int])") from e
 
         n = len(b)
         rem = n % 3
@@ -62,12 +60,7 @@ class Base64Encoder:
             out_parts.append(alphabet[e >> 2] + alphabet[(e << 4) & 63] + "==")
         elif rem == 2:
             e = (b[-2] << 8) | b[-1]
-            out_parts.append(
-                alphabet[(e >> 10) & 63]
-                + alphabet[(e >> 4) & 63]
-                + alphabet[(e << 2) & 63]
-                + "="
-            )
+            out_parts.append(alphabet[(e >> 10) & 63] + alphabet[(e >> 4) & 63] + alphabet[(e << 2) & 63] + "=")
 
         return "".join(out_parts)
 
@@ -100,16 +93,14 @@ class Base64Encoder:
         # —— all datas convert to bytes —— #
         if isinstance(data, str):
             b = data.encode("utf-8")
-        elif isinstance(data, (bytes, bytearray, memoryview)):
+        elif isinstance(data, bytes | bytearray | memoryview):
             b = bytes(data)
         else:
             try:
                 # allow list/tuple/any could be iterable int, auto & 0xFF  auto filter the value not between 0..255
-                b = bytes((int(x) & 0xFF for x in data))  # type: ignore[arg-type]
+                b = bytes(int(x) & 0xFF for x in data)  # type: ignore[arg-type]
             except TypeError as e:
-                raise TypeError(
-                    f"unsupported type: {type(data)} (expected bytes/str/Iterable[int])"
-                ) from e
+                raise TypeError(f"unsupported type: {type(data)} (expected bytes/str/Iterable[int])") from e
 
         n = len(b)
         rem = n % 3
@@ -137,12 +128,7 @@ class Base64Encoder:
             out_parts.append(alphabet[e >> 2] + alphabet[(e << 4) & 63] + "==")
         elif rem == 2:
             e = (b[-2] << 8) | b[-1]
-            out_parts.append(
-                alphabet[(e >> 10) & 63]
-                + alphabet[(e >> 4) & 63]
-                + alphabet[(e << 2) & 63]
-                + "="
-            )
+            out_parts.append(alphabet[(e >> 10) & 63] + alphabet[(e >> 4) & 63] + alphabet[(e << 2) & 63] + "=")
 
         return "".join(out_parts)
 

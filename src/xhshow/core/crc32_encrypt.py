@@ -12,10 +12,10 @@ where `c` is the intermediate CRC state produced by the core CRC32 loop.
 """
 
 from __future__ import annotations
-from typing import Iterable, Union
 
+from collections.abc import Iterable
 
-DataLike = Union[str, bytes, bytearray, memoryview, Iterable[int]]
+DataLike = str | bytes | bytearray | memoryview | Iterable[int]
 __all__ = ["CRC32"]
 
 
@@ -63,7 +63,7 @@ class CRC32:
 
         c = cls.MASK32
 
-        if isinstance(data, (bytes, bytearray, memoryview)):
+        if isinstance(data, bytes | bytearray | memoryview):
             it = bytes(data)
         elif isinstance(data, str):
             if string_mode.lower() == "utf8":
