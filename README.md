@@ -23,7 +23,7 @@ pip install xhshow
 
 ## 使用方法
 
-### 基本用法
+### 基本用法（推荐）
 
 ```python
 from xhshow import Xhshow
@@ -31,19 +31,51 @@ import requests
 
 client = Xhshow()
 
-# GET请求签名
-signature = client.sign_xs_get(
-    uri="https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",  # v0.1.3及后续版本支持自动提取uri
-    # uri="/api/sns/web/v1/user_posted"  # v0.1.2及以前版本需要主动提取uri
+# 注意: uri 参数可以传递完整 URL 或 URI 路径，会自动提取 URI
+headers = client.sign_headers_get(
+    uri="https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",  # 完整 URL（推荐）
+    # uri="/api/sns/web/v1/user_posted",  # 或者只传 URI 路径
     a1_value="your_a1_cookie_value",
     params={"num": "30", "cursor": "", "user_id": "123"}
 )
 
-# POST请求签名
-signature = client.sign_xs_post(
+# 方式1: 使用 update 方法更新现有 headers（推荐）
+base_headers = {
+    "User-Agent": "Mozilla/5.0...",
+    "Content-Type": "application/json"
+}
+base_headers.update(headers)
+response = requests.get(
+    "https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",
+    params={"num": "30", "cursor": "", "user_id": "123"},
+    headers=base_headers,
+    cookies={"a1": "your_a1_cookie_value"}
+)
+
+# 方式2: 使用 ** 解包创建新 headers
+response = requests.get(
+    "https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",
+    params={"num": "30", "cursor": "", "user_id": "123"},
+    headers={
+        "User-Agent": "Mozilla/5.0...",
+        "Content-Type": "application/json",
+        **headers  # 解包签名 headers（会创建新字典）
+    },
+    cookies={"a1": "your_a1_cookie_value"}
+)
+
+# POST 请求示例：使用 sign_headers_post
+headers_post = client.sign_headers_post(
     uri="https://edith.xiaohongshu.com/api/sns/web/v1/login",
     a1_value="your_a1_cookie_value",
     payload={"username": "test", "password": "123456"}
+)
+
+response = requests.post(
+    "https://edith.xiaohongshu.com/api/sns/web/v1/login",
+    json={"username": "test", "password": "123456"},
+    headers={**base_headers, **headers_post},
+    cookies={"a1": "your_a1_cookie_value"}
 )
 
 # 构建符合xhs平台的GET请求链接
@@ -59,6 +91,67 @@ json_body = client.build_json_body(
 )
 response = requests.post(url, data=json_body, headers=headers, cookies=cookies)
 ```
+
+<details>
+<summary>传统方法（单独生成各个字段）</summary>
+
+```python
+from xhshow import Xhshow
+import requests
+
+client = Xhshow()
+
+# 也可以使用统一方法 sign_headers（需要手动指定 method）
+headers = client.sign_headers(
+    method="GET",  # 或 "POST"
+    uri="https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",
+    a1_value="your_a1_cookie_value",
+    params={"num": "30"}  # GET 请求使用 params，POST 请求使用 payload
+)
+
+# GET 请求签名
+x_s = client.sign_xs_get(
+    uri="https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",  # v0.1.3及后续版本支持自动提取uri
+    # uri="/api/sns/web/v1/user_posted"  # v0.1.2及以前版本需要主动提取uri
+    a1_value="your_a1_cookie_value",
+    params={"num": "30", "cursor": "", "user_id": "123"}
+)
+
+# POST 请求签名
+x_s = client.sign_xs_post(
+    uri="https://edith.xiaohongshu.com/api/sns/web/v1/login",
+    a1_value="your_a1_cookie_value",
+    payload={"username": "test", "password": "123456"}
+)
+
+# 生成其他 headers 字段
+x_t = client.get_x_t()  # 时间戳（毫秒）
+x_b3_traceid = client.get_b3_trace_id()  # 16位随机 trace id
+x_xray_traceid = client.get_xray_trace_id()  # 32位 trace id
+
+# 手动构建 headers
+headers = {
+    "x-s": x_s,
+    "x-t": str(x_t),
+    "x-b3-traceid": x_b3_traceid,
+    "x-xray-traceid": x_xray_traceid
+}
+
+# 使用统一时间戳（可选，确保所有字段使用相同时间）
+import time
+timestamp = time.time()
+
+x_s = client.sign_xs_get(
+    uri="/api/sns/web/v1/user_posted",
+    a1_value="your_a1_cookie_value",
+    params={"num": "30"},
+    timestamp=timestamp  # 传入统一时间戳
+)
+x_t = client.get_x_t(timestamp=timestamp)
+x_xray_traceid = client.get_xray_trace_id(timestamp=int(timestamp * 1000))
+```
+
+</details>
 
 ### 解密签名
 
