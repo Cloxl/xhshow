@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from .config import CryptoConfig
 from .core.crypto import CryptoProcessor
+from .utils.random_gen import RandomGenerator
 from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
     validate_get_signature_params,
@@ -20,6 +21,7 @@ class Xhshow:
     def __init__(self, config: CryptoConfig | None = None):
         self.config = config or CryptoConfig()
         self.crypto_processor = CryptoProcessor(self.config)
+        self.random_generator = RandomGenerator()
 
     def _build_content_string(self, method: str, uri: str, payload: dict[str, Any] | None = None) -> str:
         """
@@ -264,3 +266,37 @@ class Xhshow:
             '{"username":"test","password":"123456"}'
         """
         return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+
+    def get_b3_trace_id(self) -> str:
+        """
+        Generate x-b3-traceid for HTTP request headers
+
+        Returns:
+            str: 16-character hexadecimal trace ID
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.get_b3_trace_id()
+            '63cd207ddeb2e360'
+        """
+        return self.random_generator.generate_b3_trace_id()
+
+    def get_xray_trace_id(self, timestamp: int | None = None, seq: int | None = None) -> str:
+        """
+        Generate x-xray-traceid for HTTP request headers
+
+        Args:
+            timestamp: Unix timestamp in milliseconds (defaults to current time)
+            seq: Sequence number 0 to 2^23-1 (defaults to random value)
+
+        Returns:
+            str: 32-character hexadecimal trace ID
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.get_xray_trace_id()
+            'cd7621e82d9c24e90bfd937d92bbbd1b'
+            >>> client.get_xray_trace_id(timestamp=1764896636081, seq=5)
+            'cd7604be588000051a7fb8ae74496a76'
+        """
+        return self.random_generator.generate_xray_trace_id(timestamp, seq)

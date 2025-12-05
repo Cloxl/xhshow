@@ -11,6 +11,7 @@ class CryptoConfig:
     # Bitwise operation constants
     MAX_32BIT: int = 0xFFFFFFFF
     MAX_SIGNED_32BIT: int = 0x7FFFFFFF
+    MAX_BYTE: int = 255
 
     # Base64 encoding constants
     STANDARD_BASE64_ALPHABET: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -60,6 +61,14 @@ class CryptoConfig:
     # Prefix constants
     X3_PREFIX: str = "mns0301_"
     XYS_PREFIX: str = "XYS_"
+
+    # Trace ID generation constants
+    HEX_CHARS: str = "abcdef0123456789"
+    XRAY_TRACE_ID_SEQ_MAX: int = 8388607  # 2^23-1
+    XRAY_TRACE_ID_TIMESTAMP_SHIFT: int = 23
+    XRAY_TRACE_ID_PART1_LENGTH: int = 16
+    XRAY_TRACE_ID_PART2_LENGTH: int = 16
+    B3_TRACE_ID_LENGTH: int = 16
 
     def with_overrides(self, **kwargs: Any) -> "CryptoConfig":
         """
