@@ -387,3 +387,125 @@ class TestIntegration:
         result = client.sign_xs("  get  ", "  /api/test  ", "  test_a1  ")  # type: ignore
         assert isinstance(result, str)
         assert result.startswith("XYS_")
+
+    def test_timestamp_parameter_support(self):
+        """测试时间戳参数支持"""
+        import time
+
+        client = Xhshow()
+        uri = "/api/sns/web/v1/user_posted"
+        a1_value = "test_a1_value"
+        params = {"num": "30"}
+
+        # Test with default timestamp
+        sig1 = client.sign_xs_get(uri, a1_value, params=params)
+        assert isinstance(sig1, str)
+        assert sig1.startswith("XYS_")
+
+        # Test with custom timestamp
+        custom_ts = time.time()
+        sig2 = client.sign_xs_get(uri, a1_value, params=params, timestamp=custom_ts)
+        assert isinstance(sig2, str)
+        assert sig2.startswith("XYS_")
+
+        # Test POST with timestamp
+        sig3 = client.sign_xs_post(
+            uri="/api/sns/web/v1/login",
+            a1_value=a1_value,
+            payload={"user": "test"},
+            timestamp=custom_ts,
+        )
+        assert isinstance(sig3, str)
+        assert sig3.startswith("XYS_")
+
+        # Test sign_xs with timestamp
+        sig4 = client.sign_xs(method="GET", uri=uri, a1_value=a1_value, payload=params, timestamp=custom_ts)
+        assert isinstance(sig4, str)
+        assert sig4.startswith("XYS_")
+
+    def test_trace_id_generation(self):
+        """测试 Trace ID 生成"""
+        import time
+
+        client = Xhshow()
+
+        # Test b3 trace id
+        b3_id = client.get_b3_trace_id()
+        assert isinstance(b3_id, str)
+        assert len(b3_id) == 16
+        assert all(c in "0123456789abcdef" for c in b3_id)
+
+        # Test xray trace id with default timestamp
+        xray_id1 = client.get_xray_trace_id()
+        assert isinstance(xray_id1, str)
+        assert len(xray_id1) == 32
+        assert all(c in "0123456789abcdef" for c in xray_id1)
+
+        # Test xray trace id with custom timestamp
+        custom_ts = int(time.time() * 1000)
+        xray_id2 = client.get_xray_trace_id(timestamp=custom_ts)
+        assert isinstance(xray_id2, str)
+        assert len(xray_id2) == 32
+
+        # Test xray trace id with custom timestamp and seq
+        xray_id3 = client.get_xray_trace_id(timestamp=custom_ts, seq=12345)
+        assert isinstance(xray_id3, str)
+        assert len(xray_id3) == 32
+
+    def test_unified_timestamp_usage(self):
+        """测试统一时间戳使用场景"""
+        import time
+
+        client = Xhshow()
+        unified_ts = time.time()
+
+        # Use same timestamp for signature and trace IDs
+        signature = client.sign_xs_post(
+            uri="/api/sns/web/v1/login",
+            a1_value="test_a1",
+            payload={"user": "test"},
+            timestamp=unified_ts,
+        )
+
+        b3_id = client.get_b3_trace_id()
+        xray_id = client.get_xray_trace_id(timestamp=int(unified_ts * 1000))
+
+        assert isinstance(signature, str)
+        assert signature.startswith("XYS_")
+        assert isinstance(b3_id, str)
+        assert len(b3_id) == 16
+        assert isinstance(xray_id, str)
+        assert len(xray_id) == 32
+
+    def test_get_x_t(self):
+        """测试 x-t header 生成"""
+        import time
+
+        client = Xhshow()
+
+        # Test with default timestamp
+        x_t1 = client.get_x_t()
+        assert isinstance(x_t1, int)
+        assert x_t1 > 0
+
+        # Test with custom timestamp
+        custom_ts = time.time()
+        x_t2 = client.get_x_t(timestamp=custom_ts)
+        assert isinstance(x_t2, int)
+        assert x_t2 == int(custom_ts * 1000)
+
+        # Test unified timestamp with all headers
+        unified_ts = time.time()
+        x_t = client.get_x_t(timestamp=unified_ts)
+        signature = client.sign_xs_get(
+            uri="/api/test", a1_value="test_a1", params={"key": "value"}, timestamp=unified_ts
+        )
+        b3_id = client.get_b3_trace_id()
+        xray_id = client.get_xray_trace_id(timestamp=int(unified_ts * 1000))
+
+        assert isinstance(x_t, int)
+        assert x_t == int(unified_ts * 1000)
+        assert isinstance(signature, str)
+        assert isinstance(b3_id, str)
+        assert isinstance(xray_id, str)
+

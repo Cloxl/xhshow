@@ -1,5 +1,6 @@
 import hashlib
 import json
+import time
 from typing import Any, Literal
 
 from .config import CryptoConfig
@@ -69,6 +70,7 @@ class Xhshow:
         a1_value: str,
         xsec_appid: str = "xhs-pc-web",
         string_param: str = "",
+        timestamp: float | None = None,
     ) -> str:
         """
         Build signature
@@ -78,11 +80,14 @@ class Xhshow:
             a1_value: a1 value from cookies
             xsec_appid: Application identifier
             string_param: String parameter
+            timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
             str: Base64 encoded signature
         """
-        payload_array = self.crypto_processor.build_payload_array(d_value, a1_value, xsec_appid, string_param)
+        payload_array = self.crypto_processor.build_payload_array(
+            d_value, a1_value, xsec_appid, string_param, timestamp
+        )
 
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
 
@@ -96,6 +101,7 @@ class Xhshow:
         a1_value: str,
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
+        timestamp: float | None = None,
     ) -> str:
         """
         Generate request signature (supports GET and POST)
@@ -111,6 +117,7 @@ class Xhshow:
             payload: Request parameters
                 - GET request: params value
                 - POST request: payload value
+            timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
             str: Complete signature string
@@ -127,7 +134,7 @@ class Xhshow:
 
         d_value = self._generate_d_value(content_string)
         signature_data["x3"] = self.crypto_processor.config.X3_PREFIX + self._build_signature(
-            d_value, a1_value, xsec_appid, content_string
+            d_value, a1_value, xsec_appid, content_string, timestamp
         )
         return self.crypto_processor.config.XYS_PREFIX + self.crypto_processor.b64encoder.encode(
             json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
@@ -140,6 +147,7 @@ class Xhshow:
         a1_value: str,
         xsec_appid: str = "xhs-pc-web",
         params: dict[str, Any] | None = None,
+        timestamp: float | None = None,
     ) -> str:
         """
         Generate GET request signature (convenience method)
@@ -151,6 +159,7 @@ class Xhshow:
             a1_value: a1 value from cookies
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             params: GET request parameters
+            timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
             str: Complete signature string
@@ -159,7 +168,7 @@ class Xhshow:
             TypeError: Parameter type error
             ValueError: Parameter value error
         """
-        return self.sign_xs("GET", uri, a1_value, xsec_appid, params)
+        return self.sign_xs("GET", uri, a1_value, xsec_appid, payload=params, timestamp=timestamp)
 
     @validate_post_signature_params
     def sign_xs_post(
@@ -168,6 +177,7 @@ class Xhshow:
         a1_value: str,
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
+        timestamp: float | None = None,
     ) -> str:
         """
         Generate POST request signature (convenience method)
@@ -179,6 +189,7 @@ class Xhshow:
             a1_value: a1 value from cookies
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             payload: POST request body data
+            timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
             str: Complete signature string
@@ -187,7 +198,7 @@ class Xhshow:
             TypeError: Parameter type error
             ValueError: Parameter value error
         """
-        return self.sign_xs("POST", uri, a1_value, xsec_appid, payload)
+        return self.sign_xs("POST", uri, a1_value, xsec_appid, payload=payload, timestamp=timestamp)
 
     def decode_x3(self, x3_signature: str) -> bytearray:
         """
@@ -300,3 +311,24 @@ class Xhshow:
             'cd7604be588000051a7fb8ae74496a76'
         """
         return self.random_generator.generate_xray_trace_id(timestamp, seq)
+
+    def get_x_t(self, timestamp: float | None = None) -> int:
+        """
+        Generate x-t header value (Unix timestamp in milliseconds)
+
+        Args:
+            timestamp: Unix timestamp in seconds (defaults to current time)
+
+        Returns:
+            int: Unix timestamp in milliseconds
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.get_x_t()
+            1764902784843
+            >>> client.get_x_t(timestamp=1764896636.081)
+            1764896636081
+        """
+        if timestamp is None:
+            timestamp = time.time()
+        return int(timestamp * 1000)
