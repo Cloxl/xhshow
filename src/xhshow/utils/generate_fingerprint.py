@@ -6,9 +6,9 @@ Describe: generate fingerprint payload for encrypt x-s-common params, that curre
 4. encrypt code version  5.whether browser has been tampered picture hash value  6. some others detect(hook, screen)
 """
 from http.cookies import SimpleCookie
-from .config import CryptoConfig
+from src.xhshow.config import CryptoConfig
+from src.xhshow.utils import encoder
 from Crypto.Cipher import ARC4
-from .utils import encoder
 
 import urllib.parse
 import hashlib
@@ -177,7 +177,7 @@ class XhsFpGenerator(object):
             b.append(int(''.join(chars[:2]), 16))
             [b.append(ord(j)) for j in chars[2:]]
 
-        b1 = b64_encoder.encode_to_b64(bytearray(b))
+        b1 = b64_encoder.custom_to_b64(bytearray(b))
 
         return b1
 

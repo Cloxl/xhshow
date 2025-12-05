@@ -54,7 +54,7 @@ class TestCryptoProcessor:
     def test_base64_encoder(self):
         """测试自定义Base64编码"""
         test_string = "Hello, World!"
-        result = self.crypto.b64encoder.encode(test_string)
+        result = self.crypto.b64encoder.encode_to_b64(test_string)
 
         assert isinstance(result, str)
         assert len(result) > 0

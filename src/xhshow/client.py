@@ -2,15 +2,19 @@ import hashlib
 import json
 import time
 from typing import Any, Literal
+from http.cookies import SimpleCookie
 
 from .config import CryptoConfig
+from .core.crc32_encrypt import CRC32
 from .core.crypto import CryptoProcessor
 from .utils.random_gen import RandomGenerator
+from .utils.generate_fingerprint import XhsFpGenerator
 from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
     validate_get_signature_params,
     validate_post_signature_params,
     validate_signature_params,
+    validate_xs_common_params,
 )
 
 __all__ = ["Xhshow"]
@@ -136,9 +140,42 @@ class Xhshow:
         signature_data["x3"] = self.crypto_processor.config.X3_PREFIX + self._build_signature(
             d_value, a1_value, xsec_appid, content_string, timestamp
         )
-        return self.crypto_processor.config.XYS_PREFIX + self.crypto_processor.b64encoder.encode(
+        return self.crypto_processor.config.XYS_PREFIX + self.crypto_processor.b64encoder.encode_to_b64(
             json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
         )
+
+    def sign_xs_common(
+        self,
+        cookie_dict: dict[str, Any] | str,
+    ) -> str:
+        """
+        Convenience wrapper to generate the `x-s-common` signature.
+
+        Args:
+            cookie_dict: complete cookie dictionary
+
+        Returns:
+            Encoded signature string suitable for the header.
+        """
+        if isinstance(cookie_dict, str):
+            ck = SimpleCookie()
+            ck.load(cookie_dict)
+            cookie_dict = {k: morsel.value for k, morsel in ck.items()}
+
+        gfp = XhsFpGenerator(self.config)
+        a1_value = cookie_dict['a1']
+        fingerprint = gfp.get_fingerprint(cookies=cookie_dict, user_agent=self.crypto_processor.config.PUBLIC_USERAGENT)
+        b1 = gfp.generate_b1(fingerprint)
+
+        x9 = CRC32.crc32_js_int(b1)
+        sign_struct = CryptoConfig.SIGNATURE_XSCOMMON_TEMPLATE
+        sign_struct['x5'] = a1_value
+        sign_struct['x8'] = b1
+        sign_struct['x9'] = x9
+        sign_json = json.dumps(sign_struct, separators=(",", ":"), ensure_ascii=False)
+        sign_list = list(sign_json.encode('utf-8'))
+        xs_common = self.crypto_processor.b64encoder.custom_to_b64(sign_list)
+        return xs_common
 
     @validate_get_signature_params
     def sign_xs_get(
@@ -199,6 +236,26 @@ class Xhshow:
             ValueError: Parameter value error
         """
         return self.sign_xs("POST", uri, a1_value, xsec_appid, payload=payload, timestamp=timestamp)
+
+    @validate_xs_common_params
+    def sign_xsc(
+        self,
+        cookie_dict: dict[str, Any] | str,
+    ) -> str:
+        """
+        Convenience wrapper to generate the `x-s-common` signature.
+
+        Args:
+            cookie_dict: Enter your complete cookie dictionary
+
+        Returns:
+            Encoded signature string suitable for the `x-s-common` header.
+
+        Raises:
+            TypeError: Parameter type error
+            ValueError: Parameter value error
+        """
+        return self.sign_xs_common(cookie_dict)
 
     def decode_x3(self, x3_signature: str) -> bytearray:
         """

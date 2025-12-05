@@ -3,6 +3,7 @@
 import base64
 import binascii
 
+from typing import Iterable
 from ..config import CryptoConfig
 
 __all__ = ["Base64Encoder"]
@@ -81,6 +82,69 @@ class Base64Encoder:
             Base64 string encoded using custom alphabet
         """
         return self.encode_to_b64(data_to_encode, self.config.CUSTOM_BASE64_ALPHABET)
+
+    @staticmethod
+    def custom_to_b64(data: bytes | str | Iterable[int]) -> str:
+        """
+        XHS official encrypt method (tripletToBase64). same as above function, but FP gen must be deal binary string
+        support:
+          - str: use UTF-8 encode to byte
+          - bytes/bytearray/memory view: use it straight
+          - Iterable[int] (eg: list[int]): bitwise with & 0xFF trans to single bit
+
+        Returns:
+            Base64 string encoded using custom alphabet
+        """
+        alphabet = CryptoConfig.CUSTOM_BASE64_ALPHABET
+
+        # —— all datas convert to bytes —— #
+        if isinstance(data, str):
+            b = data.encode("utf-8")
+        elif isinstance(data, (bytes, bytearray, memoryview)):
+            b = bytes(data)
+        else:
+            try:
+                # allow list/tuple/any could be iterable int, auto & 0xFF  auto filter the value not between 0..255
+                b = bytes((int(x) & 0xFF for x in data))  # type: ignore[arg-type]
+            except TypeError as e:
+                raise TypeError(
+                    f"unsupported type: {type(data)} (expected bytes/str/Iterable[int])"
+                ) from e
+
+        n = len(b)
+        rem = n % 3
+        stop = n - rem
+        out_parts: list[str] = []
+
+        CHUNK = 16383
+        for i in range(0, stop, CHUNK):
+            end = min(i + CHUNK, stop)
+            j = i
+            chunk_out: list[str] = []
+            while j < end:
+                val = (b[j] << 16) | (b[j + 1] << 8) | b[j + 2]
+                chunk_out.append(
+                    alphabet[(val >> 18) & 63]
+                    + alphabet[(val >> 12) & 63]
+                    + alphabet[(val >> 6) & 63]
+                    + alphabet[val & 63]
+                )
+                j += 3
+            out_parts.append("".join(chunk_out))
+
+        if rem == 1:
+            e = b[-1]
+            out_parts.append(alphabet[e >> 2] + alphabet[(e << 4) & 63] + "==")
+        elif rem == 2:
+            e = (b[-2] << 8) | b[-1]
+            out_parts.append(
+                alphabet[(e >> 10) & 63]
+                + alphabet[(e >> 4) & 63]
+                + alphabet[(e << 2) & 63]
+                + "="
+            )
+
+        return "".join(out_parts)
 
     def decode(self, encoded_string: str) -> str:
         """

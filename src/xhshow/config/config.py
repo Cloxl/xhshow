@@ -13,7 +13,7 @@ class CryptoConfig:
     DATA_PALTFORM = "Windows"
     DATA_SVN = "2"
     DATA_SDK_VERSION = "4.2.6"
-    DATA_webBuild = '4.86.0'
+    DATA_webBuild = '5.0.3'
 
     # Bitwise operation constants
     MAX_32BIT: int = 0xFFFFFFFF
