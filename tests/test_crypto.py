@@ -509,3 +509,56 @@ class TestIntegration:
         assert isinstance(b3_id, str)
         assert isinstance(xray_id, str)
 
+    def test_sign_headers(self):
+        """测试统一 headers 生成"""
+        import time
+
+        client = Xhshow()
+
+        # Test GET request headers
+        headers = client.sign_headers(
+            method="GET",
+            uri="/api/sns/web/v1/user_posted",
+            a1_value="test_a1_value",
+            payload={"num": "30", "cursor": "", "user_id": "123"},
+        )
+
+        assert isinstance(headers, dict)
+        assert "x-s" in headers
+        assert "x-t" in headers
+        assert "x-b3-traceid" in headers
+        assert "x-xray-traceid" in headers
+
+        assert headers["x-s"].startswith("XYS_")
+        assert headers["x-t"].isdigit()
+        assert len(headers["x-b3-traceid"]) == 16
+        assert len(headers["x-xray-traceid"]) == 32
+
+        # Test POST request headers
+        headers_post = client.sign_headers(
+            method="POST",
+            uri="/api/sns/web/v1/login",
+            a1_value="test_a1_value",
+            payload={"username": "test", "password": "123456"},
+        )
+
+        assert isinstance(headers_post, dict)
+        assert all(k in headers_post for k in ["x-s", "x-t", "x-b3-traceid", "x-xray-traceid"])
+
+        # Test with custom timestamp
+        custom_ts = time.time()
+        headers_custom = client.sign_headers(
+            method="GET",
+            uri="/api/test",
+            a1_value="test_a1",
+            payload={"key": "value"},
+            timestamp=custom_ts,
+        )
+
+        assert isinstance(headers_custom, dict)
+        assert headers_custom["x-t"] == str(int(custom_ts * 1000))
+
+        # Test all values are strings
+        assert all(isinstance(v, str) for v in headers.values())
+        assert all(isinstance(v, str) for v in headers_post.values())
+        assert all(isinstance(v, str) for v in headers_custom.values())
