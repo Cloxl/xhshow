@@ -614,3 +614,34 @@ class TestIntegration:
         )
 
         assert headers_ts["x-t"] == str(int(custom_ts * 1000))
+
+    def test_sign_headers_parameter_validation(self):
+        """测试 sign_headers 参数验证"""
+        client = Xhshow()
+
+        # Test GET request with payload should raise error
+        with pytest.raises(ValueError, match="GET requests must use 'params', not 'payload'"):
+            client.sign_headers(
+                method="GET",
+                uri="/api/test",
+                a1_value="test_a1",
+                payload={"key": "value"},
+            )
+
+        # Test POST request with params should raise error
+        with pytest.raises(ValueError, match="POST requests must use 'payload', not 'params'"):
+            client.sign_headers(
+                method="POST",
+                uri="/api/test",
+                a1_value="test_a1",
+                params={"key": "value"},
+            )
+
+        # Test unsupported method should raise error
+        with pytest.raises(ValueError, match="Unsupported method"):
+            client.sign_headers(
+                method="PUT",
+                uri="/api/test",
+                a1_value="test_a1",
+                params={"key": "value"},
+            )

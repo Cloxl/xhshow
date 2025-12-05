@@ -380,10 +380,21 @@ class Xhshow:
         if timestamp is None:
             timestamp = time.time()
 
-        # Use params for GET, payload for POST
-        request_data = params if method.upper() == "GET" else payload
+        method_upper = method.upper()
 
-        x_s = self.sign_xs(method, uri, a1_value, xsec_appid, request_data, timestamp)
+        # Validate method and parameters
+        if method_upper == "GET":
+            if payload is not None:
+                raise ValueError("GET requests must use 'params', not 'payload'")
+            request_data = params
+        elif method_upper == "POST":
+            if params is not None:
+                raise ValueError("POST requests must use 'payload', not 'params'")
+            request_data = payload
+        else:
+            raise ValueError(f"Unsupported method: {method}")
+
+        x_s = self.sign_xs(method_upper, uri, a1_value, xsec_appid, request_data, timestamp)
         x_t = self.get_x_t(timestamp)
         x_b3_traceid = self.get_b3_trace_id()
         x_xray_traceid = self.get_xray_trace_id(timestamp=int(timestamp * 1000))
