@@ -77,8 +77,6 @@ class RandomGenerator:
             f"0{self.config.XRAY_TRACE_ID_PART1_LENGTH}x",
         )
         # Last 16 chars: completely random, untraceable, can be simplified
-        part2 = "".join(
-            random.choice(self.config.HEX_CHARS) for _ in range(self.config.XRAY_TRACE_ID_PART2_LENGTH)
-        )
+        part2 = "".join(random.choice(self.config.HEX_CHARS) for _ in range(self.config.XRAY_TRACE_ID_PART2_LENGTH))
 
         return part1 + part2
