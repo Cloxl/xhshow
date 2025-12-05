@@ -339,6 +339,7 @@ class Xhshow:
         uri: str,
         a1_value: str,
         xsec_appid: str = "xhs-pc-web",
+        params: dict[str, Any] | None = None,
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
     ) -> dict[str, str]:
@@ -350,7 +351,8 @@ class Xhshow:
             uri: Request URI or full URL
             a1_value: a1 value from cookies
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
-            payload: Request parameters (GET: params, POST: payload)
+            params: GET request parameters (only used when method="GET")
+            payload: POST request body data (only used when method="POST")
             timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
@@ -358,11 +360,19 @@ class Xhshow:
 
         Examples:
             >>> client = Xhshow()
+            >>> # GET request
             >>> headers = client.sign_headers(
             ...     method="GET",
             ...     uri="/api/sns/web/v1/user_posted",
             ...     a1_value="your_a1_value",
-            ...     payload={"num": "30"}
+            ...     params={"num": "30"}
+            ... )
+            >>> # POST request
+            >>> headers = client.sign_headers(
+            ...     method="POST",
+            ...     uri="/api/sns/web/v1/login",
+            ...     a1_value="your_a1_value",
+            ...     payload={"username": "test"}
             ... )
             >>> headers.keys()
             dict_keys(['x-s', 'x-t', 'x-b3-traceid', 'x-xray-traceid'])
@@ -370,7 +380,10 @@ class Xhshow:
         if timestamp is None:
             timestamp = time.time()
 
-        x_s = self.sign_xs(method, uri, a1_value, xsec_appid, payload, timestamp)
+        # Use params for GET, payload for POST
+        request_data = params if method.upper() == "GET" else payload
+
+        x_s = self.sign_xs(method, uri, a1_value, xsec_appid, request_data, timestamp)
         x_t = self.get_x_t(timestamp)
         x_b3_traceid = self.get_b3_trace_id()
         x_xray_traceid = self.get_xray_trace_id(timestamp=int(timestamp * 1000))
@@ -381,3 +394,65 @@ class Xhshow:
             "x-b3-traceid": x_b3_traceid,
             "x-xray-traceid": x_xray_traceid,
         }
+
+    def sign_headers_get(
+        self,
+        uri: str,
+        a1_value: str,
+        xsec_appid: str = "xhs-pc-web",
+        params: dict[str, Any] | None = None,
+        timestamp: float | None = None,
+    ) -> dict[str, str]:
+        """
+        Generate complete request headers for GET request (convenience method)
+
+        Args:
+            uri: Request URI or full URL
+            a1_value: a1 value from cookies
+            xsec_appid: Application identifier, defaults to `xhs-pc-web`
+            params: GET request parameters
+            timestamp: Unix timestamp in seconds (defaults to current time)
+
+        Returns:
+            dict: Complete headers including x-s, x-t, x-b3-traceid, x-xray-traceid
+
+        Examples:
+            >>> client = Xhshow()
+            >>> headers = client.sign_headers_get(
+            ...     uri="/api/sns/web/v1/user_posted",
+            ...     a1_value="your_a1_value",
+            ...     params={"num": "30"}
+            ... )
+        """
+        return self.sign_headers("GET", uri, a1_value, xsec_appid, params=params, timestamp=timestamp)
+
+    def sign_headers_post(
+        self,
+        uri: str,
+        a1_value: str,
+        xsec_appid: str = "xhs-pc-web",
+        payload: dict[str, Any] | None = None,
+        timestamp: float | None = None,
+    ) -> dict[str, str]:
+        """
+        Generate complete request headers for POST request (convenience method)
+
+        Args:
+            uri: Request URI or full URL
+            a1_value: a1 value from cookies
+            xsec_appid: Application identifier, defaults to `xhs-pc-web`
+            payload: POST request body data
+            timestamp: Unix timestamp in seconds (defaults to current time)
+
+        Returns:
+            dict: Complete headers including x-s, x-t, x-b3-traceid, x-xray-traceid
+
+        Examples:
+            >>> client = Xhshow()
+            >>> headers = client.sign_headers_post(
+            ...     uri="/api/sns/web/v1/login",
+            ...     a1_value="your_a1_value",
+            ...     payload={"username": "test", "password": "123456"}
+            ... )
+        """
+        return self.sign_headers("POST", uri, a1_value, xsec_appid, payload=payload, timestamp=timestamp)
