@@ -465,7 +465,7 @@ class Xhshow:
         x_xray_traceid = self.get_xray_trace_id(timestamp=int(timestamp * 1000))
 
         return {
-            # "x-s": x_s,
+            "x-s": x_s,
             "x-s-common": x_s_common,
             "x-t": str(x_t),
             "x-b3-traceid": x_b3_traceid,
