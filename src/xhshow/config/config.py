@@ -67,7 +67,7 @@ class CryptoConfig:
     )
 
     # Prefix constants
-    X3_PREFIX: str = "mns0101_"
+    X3_PREFIX: str = "mns0301_"
     XYS_PREFIX: str = "XYS_"
 
     # Trace ID generation constants
