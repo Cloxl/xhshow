@@ -4,6 +4,7 @@ import time
 from typing import Any, Literal
 
 from .config import CryptoConfig
+from .core.common_sign import XsCommonSigner
 from .core.crypto import CryptoProcessor
 from .utils.random_gen import RandomGenerator
 from .utils.url_utils import build_url, extract_uri
@@ -11,6 +12,7 @@ from .utils.validators import (
     validate_get_signature_params,
     validate_post_signature_params,
     validate_signature_params,
+    validate_xs_common_params,
 )
 
 __all__ = ["Xhshow"]
@@ -140,6 +142,23 @@ class Xhshow:
             json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
         )
 
+    def sign_xs_common(
+        self,
+        cookie_dict: dict[str, Any] | str,
+    ) -> str:
+        """
+        Generate x-s-common signature
+
+        Args:
+            cookie_dict: Complete cookie dictionary or cookie string
+
+        Returns:
+            Encoded x-s-common signature string
+        """
+        parsed_cookies = self._parse_cookies(cookie_dict)
+        signer = XsCommonSigner(self.config)
+        return signer.sign(parsed_cookies)
+
     @validate_get_signature_params
     def sign_xs_get(
         self,
@@ -199,6 +218,26 @@ class Xhshow:
             ValueError: Parameter value error
         """
         return self.sign_xs("POST", uri, a1_value, xsec_appid, payload=payload, timestamp=timestamp)
+
+    @validate_xs_common_params
+    def sign_xsc(
+        self,
+        cookie_dict: dict[str, Any] | str,
+    ) -> str:
+        """
+        Convenience wrapper to generate the `x-s-common` signature.
+
+        Args:
+            cookie_dict: Enter your complete cookie dictionary
+
+        Returns:
+            Encoded signature string suitable for the `x-s-common` header.
+
+        Raises:
+            TypeError: Parameter type error
+            ValueError: Parameter value error
+        """
+        return self.sign_xs_common(cookie_dict)
 
     def decode_x3(self, x3_signature: str) -> bytearray:
         """
@@ -333,11 +372,29 @@ class Xhshow:
             timestamp = time.time()
         return int(timestamp * 1000)
 
+    def _parse_cookies(self, cookies: dict[str, Any] | str) -> dict[str, Any]:
+        """
+        Parse cookies to dict format
+
+        Args:
+            cookies: Cookie dictionary or cookie string
+
+        Returns:
+            dict: Parsed cookie dictionary
+        """
+        if isinstance(cookies, str):
+            from http.cookies import SimpleCookie
+
+            ck = SimpleCookie()
+            ck.load(cookies)
+            return {k: morsel.value for k, morsel in ck.items()}
+        return cookies
+
     def sign_headers(
         self,
         method: Literal["GET", "POST"],
         uri: str,
-        a1_value: str,
+        cookies: dict[str, Any] | str,
         xsec_appid: str = "xhs-pc-web",
         params: dict[str, Any] | None = None,
         payload: dict[str, Any] | None = None,
@@ -349,33 +406,34 @@ class Xhshow:
         Args:
             method: Request method ("GET" or "POST")
             uri: Request URI or full URL
-            a1_value: a1 value from cookies
+            cookies: Complete cookie dictionary or cookie string
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             params: GET request parameters (only used when method="GET")
             payload: POST request body data (only used when method="POST")
             timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
-            dict: Complete headers including x-s, x-t, x-b3-traceid, x-xray-traceid
+            dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
 
         Examples:
             >>> client = Xhshow()
+            >>> cookies = {"a1": "your_a1_value", "web_session": "..."}
             >>> # GET request
             >>> headers = client.sign_headers(
             ...     method="GET",
             ...     uri="/api/sns/web/v1/user_posted",
-            ...     a1_value="your_a1_value",
+            ...     cookies=cookies,
             ...     params={"num": "30"}
             ... )
             >>> # POST request
             >>> headers = client.sign_headers(
             ...     method="POST",
             ...     uri="/api/sns/web/v1/login",
-            ...     a1_value="your_a1_value",
+            ...     cookies=cookies,
             ...     payload={"username": "test"}
             ... )
             >>> headers.keys()
-            dict_keys(['x-s', 'x-t', 'x-b3-traceid', 'x-xray-traceid'])
+            dict_keys(['x-s', 'x-s-common', 'x-t', 'x-b3-traceid', 'x-xray-traceid'])
         """
         if timestamp is None:
             timestamp = time.time()
@@ -394,13 +452,21 @@ class Xhshow:
         else:
             raise ValueError(f"Unsupported method: {method}")
 
+        cookie_dict = self._parse_cookies(cookies)
+
+        a1_value = cookie_dict.get("a1")
+        if not a1_value:
+            raise ValueError("Missing 'a1' in cookies")
+
         x_s = self.sign_xs(method_upper, uri, a1_value, xsec_appid, request_data, timestamp)
+        x_s_common = self.sign_xs_common(cookie_dict)
         x_t = self.get_x_t(timestamp)
         x_b3_traceid = self.get_b3_trace_id()
         x_xray_traceid = self.get_xray_trace_id(timestamp=int(timestamp * 1000))
 
         return {
-            "x-s": x_s,
+            # "x-s": x_s,
+            "x-s-common": x_s_common,
             "x-t": str(x_t),
             "x-b3-traceid": x_b3_traceid,
             "x-xray-traceid": x_xray_traceid,
@@ -409,7 +475,7 @@ class Xhshow:
     def sign_headers_get(
         self,
         uri: str,
-        a1_value: str,
+        cookies: dict[str, Any] | str,
         xsec_appid: str = "xhs-pc-web",
         params: dict[str, Any] | None = None,
         timestamp: float | None = None,
@@ -419,28 +485,29 @@ class Xhshow:
 
         Args:
             uri: Request URI or full URL
-            a1_value: a1 value from cookies
+            cookies: Complete cookie dictionary or cookie string
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             params: GET request parameters
             timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
-            dict: Complete headers including x-s, x-t, x-b3-traceid, x-xray-traceid
+            dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
 
         Examples:
             >>> client = Xhshow()
+            >>> cookies = {"a1": "your_a1_value", "web_session": "..."}
             >>> headers = client.sign_headers_get(
             ...     uri="/api/sns/web/v1/user_posted",
-            ...     a1_value="your_a1_value",
+            ...     cookies=cookies,
             ...     params={"num": "30"}
             ... )
         """
-        return self.sign_headers("GET", uri, a1_value, xsec_appid, params=params, timestamp=timestamp)
+        return self.sign_headers("GET", uri, cookies, xsec_appid, params=params, timestamp=timestamp)
 
     def sign_headers_post(
         self,
         uri: str,
-        a1_value: str,
+        cookies: dict[str, Any] | str,
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
@@ -450,20 +517,21 @@ class Xhshow:
 
         Args:
             uri: Request URI or full URL
-            a1_value: a1 value from cookies
+            cookies: Complete cookie dictionary or cookie string
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             payload: POST request body data
             timestamp: Unix timestamp in seconds (defaults to current time)
 
         Returns:
-            dict: Complete headers including x-s, x-t, x-b3-traceid, x-xray-traceid
+            dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
 
         Examples:
             >>> client = Xhshow()
+            >>> cookies = {"a1": "your_a1_value", "web_session": "..."}
             >>> headers = client.sign_headers_post(
             ...     uri="/api/sns/web/v1/login",
-            ...     a1_value="your_a1_value",
+            ...     cookies=cookies,
             ...     payload={"username": "test", "password": "123456"}
             ... )
         """
-        return self.sign_headers("POST", uri, a1_value, xsec_appid, payload=payload, timestamp=timestamp)
+        return self.sign_headers("POST", uri, cookies, xsec_appid, payload=payload, timestamp=timestamp)

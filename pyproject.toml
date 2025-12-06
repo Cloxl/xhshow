@@ -22,7 +22,10 @@ classifiers = [
     "Topic :: Security :: Cryptography",
     "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+    "curl-cffi>=0.13.0",
+    "pycryptodome>=3.23.0",
+]
 
 [project.optional-dependencies]
 dev = [

@@ -1,0 +1,25 @@
+"""Data constants module"""
+
+from .fingerprint_data import (
+    BROWSER_PLUGINS,
+    CANVAS_HASH,
+    COLOR_DEPTH_OPTIONS,
+    CORE_OPTIONS,
+    DEVICE_MEMORY_OPTIONS,
+    FONTS,
+    GPU_VENDORS,
+    SCREEN_RESOLUTIONS,
+    VOICE_HASH_OPTIONS,
+)
+
+__all__ = [
+    "GPU_VENDORS",
+    "SCREEN_RESOLUTIONS",
+    "COLOR_DEPTH_OPTIONS",
+    "DEVICE_MEMORY_OPTIONS",
+    "CORE_OPTIONS",
+    "BROWSER_PLUGINS",
+    "CANVAS_HASH",
+    "VOICE_HASH_OPTIONS",
+    "FONTS",
+]

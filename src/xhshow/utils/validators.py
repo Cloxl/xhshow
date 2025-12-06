@@ -12,6 +12,7 @@ __all__ = [
     "validate_signature_params",
     "validate_get_signature_params",
     "validate_post_signature_params",
+    "validate_xs_common_params",
 ]
 
 
@@ -75,6 +76,18 @@ class RequestSignatureValidator:
                     raise TypeError(f"payload keys must be str, got {type(key).__name__} for key '{key}'")
 
         return payload
+
+    @staticmethod
+    def validate_cookie(cookie: Any) -> dict[str, Any] | str:
+        """Validate cookie parameter"""
+        if cookie is not None and not (isinstance(cookie, dict) or isinstance(cookie, str)):
+            raise TypeError(f"payload must be dict or None, got {type(cookie).__name__}")
+        # detect cookie dict validation
+        if cookie is not None and isinstance(cookie, dict):
+            for key in cookie.keys():
+                if not isinstance(key, str):
+                    raise TypeError(f"payload keys must be str, got {type(key).__name__} for key '{key}'")
+        return cookie
 
 
 def validate_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
@@ -192,6 +205,38 @@ def validate_post_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
             validated_xsec_appid,
             validated_payload,
             timestamp,
+        )
+
+    return wrapper  # type: ignore
+
+
+def validate_xs_common_params(func: F) -> F:  # type: ignore[misc]  # noqa: UP047
+    """
+    Parameter validation decorator for the `sign_xsc` method.
+
+    This wrapper normalizes and validates the arguments before delegating to
+    the underlying signing implementation.
+
+    Args:
+        func: Method to be decorated.
+
+    Returns:
+        Wrapped method with validated parameters.
+    """
+
+    @wraps(func)
+    def wrapper(
+        self,
+        cookie_dict: dict[str, Any] | None = None,
+    ) -> str:
+        validator = RequestSignatureValidator()
+
+        # Reuse existing validators where possible
+        validated_cookie_dict = validator.validate_cookie(cookie_dict)
+
+        return func(
+            self,
+            validated_cookie_dict,
         )
 
     return wrapper  # type: ignore
