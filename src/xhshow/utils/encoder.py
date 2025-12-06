@@ -11,6 +11,23 @@ __all__ = ["Base64Encoder"]
 class Base64Encoder:
     def __init__(self, config: CryptoConfig):
         self.config = config
+        # Cache translation tables for better performance
+        self._custom_encode_table = str.maketrans(
+            config.STANDARD_BASE64_ALPHABET,
+            config.CUSTOM_BASE64_ALPHABET,
+        )
+        self._custom_decode_table = str.maketrans(
+            config.CUSTOM_BASE64_ALPHABET,
+            config.STANDARD_BASE64_ALPHABET,
+        )
+        self._x3_encode_table = str.maketrans(
+            config.STANDARD_BASE64_ALPHABET,
+            config.X3_BASE64_ALPHABET,
+        )
+        self._x3_decode_table = str.maketrans(
+            config.X3_BASE64_ALPHABET,
+            config.STANDARD_BASE64_ALPHABET,
+        )
 
     def encode(self, data_to_encode: str) -> str:
         """
@@ -26,9 +43,7 @@ class Base64Encoder:
         standard_encoded_bytes = base64.b64encode(data_bytes)
         standard_encoded_string = standard_encoded_bytes.decode("utf-8")
 
-        translation_table = str.maketrans(self.config.STANDARD_BASE64_ALPHABET, self.config.CUSTOM_BASE64_ALPHABET)
-
-        return standard_encoded_string.translate(translation_table)
+        return standard_encoded_string.translate(self._custom_encode_table)
 
     def decode(self, encoded_string: str) -> str:
         """
@@ -43,11 +58,8 @@ class Base64Encoder:
         Raises:
             ValueError: Base64 decoding failed
         """
-        reverse_translation_table = str.maketrans(
-            self.config.CUSTOM_BASE64_ALPHABET, self.config.STANDARD_BASE64_ALPHABET
-        )
+        standard_encoded_string = encoded_string.translate(self._custom_decode_table)
 
-        standard_encoded_string = encoded_string.translate(reverse_translation_table)
         try:
             decoded_bytes = base64.b64decode(standard_encoded_string)
         except (binascii.Error, ValueError) as e:
@@ -67,9 +79,8 @@ class Base64Encoder:
         Raises:
             ValueError: Base64 decoding failed
         """
-        reverse_translation_table = str.maketrans(self.config.X3_BASE64_ALPHABET, self.config.STANDARD_BASE64_ALPHABET)
+        standard_encoded_string = encoded_string.translate(self._x3_decode_table)
 
-        standard_encoded_string = encoded_string.translate(reverse_translation_table)
         try:
             decoded_bytes = base64.b64decode(standard_encoded_string)
         except (binascii.Error, ValueError) as e:
@@ -89,6 +100,4 @@ class Base64Encoder:
         standard_encoded_bytes = base64.b64encode(input_bytes)
         standard_encoded_string = standard_encoded_bytes.decode("utf-8")
 
-        translation_table = str.maketrans(self.config.STANDARD_BASE64_ALPHABET, self.config.X3_BASE64_ALPHABET)
-
-        return standard_encoded_string.translate(translation_table)
+        return standard_encoded_string.translate(self._x3_encode_table)

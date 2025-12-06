@@ -56,6 +56,7 @@ class CryptoProcessor:
         a1_value: str,
         app_identifier: str = "xhs-pc-web",
         string_param: str = "",
+        timestamp: float | None = None,
     ) -> list[int]:
         """
         Build payload array (t.js version - exact match)
@@ -65,6 +66,7 @@ class CryptoProcessor:
             a1_value (str): a1 value from cookies
             app_identifier (str): Application identifier, default "xhs-pc-web"
             string_param (str): String parameter (used for URI length calculation)
+            timestamp (float | None): Unix timestamp in seconds (defaults to current time)
 
         Returns:
             list[int]: Complete payload byte array (124 bytes)
@@ -78,7 +80,8 @@ class CryptoProcessor:
         payload.extend(seed_bytes)
         seed_byte_0 = seed_bytes[0]
 
-        timestamp = time.time()
+        if timestamp is None:
+            timestamp = time.time()
         payload.extend(self.env_fingerprint_a(int(timestamp * 1000), self.config.ENV_FINGERPRINT_XOR_KEY))
 
         time_offset = self.random_gen.generate_random_byte_in_range(

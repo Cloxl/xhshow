@@ -8,9 +8,18 @@ __all__ = ["CryptoConfig"]
 class CryptoConfig:
     """Configuration constants for cryptographic operations"""
 
+    # Gid encrypt parameters
+    DES_KEY = "zbp30y86"
+    GID_URL = "https://as.xiaohongshu.com/api/sec/v1/shield/webprofile"
+    DATA_PALTFORM = "Windows"
+    DATA_SVN = "2"
+    DATA_SDK_VERSION = "4.2.6"
+    DATA_webBuild = "5.0.3"
+
     # Bitwise operation constants
     MAX_32BIT: int = 0xFFFFFFFF
     MAX_SIGNED_32BIT: int = 0x7FFFFFFF
+    MAX_BYTE: int = 255
 
     # Base64 encoding constants
     STANDARD_BASE64_ALPHABET: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -60,6 +69,41 @@ class CryptoConfig:
     # Prefix constants
     X3_PREFIX: str = "mns0301_"
     XYS_PREFIX: str = "XYS_"
+
+    # Trace ID generation constants
+    HEX_CHARS: str = "abcdef0123456789"
+    XRAY_TRACE_ID_SEQ_MAX: int = 8388607  # 2^23-1
+    XRAY_TRACE_ID_TIMESTAMP_SHIFT: int = 23
+    XRAY_TRACE_ID_PART1_LENGTH: int = 16
+    XRAY_TRACE_ID_PART2_LENGTH: int = 16
+    B3_TRACE_ID_LENGTH: int = 16
+
+    # b1 secret key
+    B1_SECRET_KEY: str = "xhswebmplfbt"
+
+    SIGNATURE_XSCOMMON_TEMPLATE: dict[str, Any] = field(
+        default_factory=lambda: {
+            "s0": 5,
+            "s1": "",
+            "x0": "1",
+            "x1": "4.2.6",
+            "x2": "Windows",
+            "x3": "xhs-pc-web",
+            "x4": "4.86.0",
+            "x5": "",
+            "x6": "",
+            "x7": "",
+            "x8": "",
+            "x9": -596800761,
+            "x10": 0,
+            "x11": "normal",
+        }
+    )
+
+    PUBLIC_USERAGENT: str = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
+    )
 
     def with_overrides(self, **kwargs: Any) -> "CryptoConfig":
         """
