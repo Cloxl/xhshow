@@ -122,9 +122,3 @@ class CRC32:
         a = cls.POLY
         u = ((cls.MASK32 ^ c) ^ a) & cls.MASK32  # (-1 ^ c ^ a) >>> 0
         return cls._to_signed32(u) if signed else u
-
-
-# Example quick usage:
-# if __name__ == "__main__":
-#     s = "I38rHdgsjopgIvesdVwgIC+oIELmBZ5e3VwXLgFTIxS3bqwErFeexd0ekncAzMFYnqthIhJeSBMDKutRI3KsYorWHPtGrbV0P9W"
-#     print(CRC32.crc32_js_int(s))
