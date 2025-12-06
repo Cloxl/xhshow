@@ -1,6 +1,7 @@
 import pytest
 
 from xhshow import CryptoProcessor, Xhshow
+from xhshow.core.crc32_encrypt import CRC32
 
 
 class TestCryptoProcessor:
@@ -54,7 +55,7 @@ class TestCryptoProcessor:
     def test_base64_encoder(self):
         """测试自定义Base64编码"""
         test_string = "Hello, World!"
-        result = self.crypto.b64encoder.encode_to_b64(test_string)
+        result = self.crypto.b64encoder.encode(test_string)
 
         assert isinstance(result, str)
         assert len(result) > 0
@@ -516,15 +517,17 @@ class TestIntegration:
         client = Xhshow()
 
         # Test GET request headers with params
+        cookies = {"a1": "test_a1_value", "web_session": "test_session"}
         headers = client.sign_headers(
             method="GET",
             uri="/api/sns/web/v1/user_posted",
-            a1_value="test_a1_value",
+            cookies=cookies,
             params={"num": "30", "cursor": "", "user_id": "123"},
         )
 
         assert isinstance(headers, dict)
         assert "x-s" in headers
+        assert "x-s-common" in headers
         assert "x-t" in headers
         assert "x-b3-traceid" in headers
         assert "x-xray-traceid" in headers
@@ -538,19 +541,19 @@ class TestIntegration:
         headers_post = client.sign_headers(
             method="POST",
             uri="/api/sns/web/v1/login",
-            a1_value="test_a1_value",
+            cookies=cookies,
             payload={"username": "test", "password": "123456"},
         )
 
         assert isinstance(headers_post, dict)
-        assert all(k in headers_post for k in ["x-s", "x-t", "x-b3-traceid", "x-xray-traceid"])
+        assert all(k in headers_post for k in ["x-s", "x-s-common", "x-t", "x-b3-traceid", "x-xray-traceid"])
 
         # Test with custom timestamp
         custom_ts = time.time()
         headers_custom = client.sign_headers(
             method="GET",
             uri="/api/test",
-            a1_value="test_a1",
+            cookies=cookies,
             params={"key": "value"},
             timestamp=custom_ts,
         )
@@ -570,21 +573,22 @@ class TestIntegration:
         client = Xhshow()
 
         # Test basic usage
+        cookies = {"a1": "test_a1_value", "web_session": "test_session"}
         headers = client.sign_headers_get(
             uri="/api/sns/web/v1/user_posted",
-            a1_value="test_a1_value",
+            cookies=cookies,
             params={"num": "30", "cursor": "", "user_id": "123"},
         )
 
         assert isinstance(headers, dict)
-        assert all(k in headers for k in ["x-s", "x-t", "x-b3-traceid", "x-xray-traceid"])
+        assert all(k in headers for k in ["x-s", "x-s-common", "x-t", "x-b3-traceid", "x-xray-traceid"])
         assert headers["x-s"].startswith("XYS_")
         assert all(isinstance(v, str) for v in headers.values())
 
         # Test with custom timestamp
         custom_ts = time.time()
         headers_ts = client.sign_headers_get(
-            uri="/api/test", a1_value="test_a1", params={"key": "value"}, timestamp=custom_ts
+            uri="/api/test", cookies=cookies, params={"key": "value"}, timestamp=custom_ts
         )
 
         assert headers_ts["x-t"] == str(int(custom_ts * 1000))
@@ -596,21 +600,22 @@ class TestIntegration:
         client = Xhshow()
 
         # Test basic usage
+        cookies = {"a1": "test_a1_value", "web_session": "test_session"}
         headers = client.sign_headers_post(
             uri="/api/sns/web/v1/login",
-            a1_value="test_a1_value",
+            cookies=cookies,
             payload={"username": "test", "password": "123456"},
         )
 
         assert isinstance(headers, dict)
-        assert all(k in headers for k in ["x-s", "x-t", "x-b3-traceid", "x-xray-traceid"])
+        assert all(k in headers for k in ["x-s", "x-s-common", "x-t", "x-b3-traceid", "x-xray-traceid"])
         assert headers["x-s"].startswith("XYS_")
         assert all(isinstance(v, str) for v in headers.values())
 
         # Test with custom timestamp
         custom_ts = time.time()
         headers_ts = client.sign_headers_post(
-            uri="/api/test", a1_value="test_a1", payload={"key": "value"}, timestamp=custom_ts
+            uri="/api/test", cookies=cookies, payload={"key": "value"}, timestamp=custom_ts
         )
 
         assert headers_ts["x-t"] == str(int(custom_ts * 1000))
@@ -619,12 +624,14 @@ class TestIntegration:
         """测试 sign_headers 参数验证"""
         client = Xhshow()
 
+        cookies = {"a1": "test_a1", "web_session": "test_session"}
+
         # Test GET request with payload should raise error
         with pytest.raises(ValueError, match="GET requests must use 'params', not 'payload'"):
             client.sign_headers(
                 method="GET",
                 uri="/api/test",
-                a1_value="test_a1",
+                cookies=cookies,
                 payload={"key": "value"},
             )
 
@@ -633,7 +640,7 @@ class TestIntegration:
             client.sign_headers(
                 method="POST",
                 uri="/api/test",
-                a1_value="test_a1",
+                cookies=cookies,
                 params={"key": "value"},
             )
 
@@ -642,6 +649,58 @@ class TestIntegration:
             client.sign_headers(
                 method="PUT",
                 uri="/api/test",
-                a1_value="test_a1",
+                cookies=cookies,
                 params={"key": "value"},
             )
+
+
+class TestCRC32:
+    """测试 CRC32 加密功能"""
+
+    def test_crc32_js_int_basic(self):
+        """测试基本的 CRC32 计算"""
+        test_string = (
+            "I38rHdgsjopgIvesdVwgIC+oIELmBZ5e3VwXLgFTIxS3bqwErFeexd0ekncAzMFYnqthIhJeSBMDKutRI3KsYorWHPtGrbV0P9W"
+        )
+        result = CRC32.crc32_js_int(test_string)
+
+        assert isinstance(result, int)
+        assert result == 679790455
+
+    def test_crc32_signed_unsigned(self):
+        """测试有符号和无符号结果"""
+        test_data = "test_data"
+
+        signed_result = CRC32.crc32_js_int(test_data, signed=True)
+        unsigned_result = CRC32.crc32_js_int(test_data, signed=False)
+
+        assert isinstance(signed_result, int)
+        assert isinstance(unsigned_result, int)
+        assert -2147483648 <= signed_result <= 2147483647
+        assert 0 <= unsigned_result <= 0xFFFFFFFF
+
+    def test_crc32_string_modes(self):
+        """测试不同的字符串模式"""
+        test_string = "测试中文"
+
+        js_result = CRC32.crc32_js_int(test_string, string_mode="js")
+        utf8_result = CRC32.crc32_js_int(test_string, string_mode="utf8")
+
+        assert isinstance(js_result, int)
+        assert isinstance(utf8_result, int)
+        # JS mode 和 UTF8 mode 对中文的处理应该不同
+        assert js_result != utf8_result
+
+    def test_crc32_bytes_input(self):
+        """测试字节输入"""
+        test_bytes = b"test_bytes"
+        result = CRC32.crc32_js_int(test_bytes)
+
+        assert isinstance(result, int)
+
+    def test_crc32_iterable_input(self):
+        """测试可迭代输入"""
+        test_list = [72, 101, 108, 108, 111]  # "Hello"
+        result = CRC32.crc32_js_int(test_list)
+
+        assert isinstance(result, int)
