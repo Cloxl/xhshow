@@ -23,7 +23,6 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "curl-cffi>=0.13.0",
     "pycryptodome>=3.23.0",
 ]
 
