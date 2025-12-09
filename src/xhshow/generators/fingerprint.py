@@ -65,7 +65,7 @@ class FingerprintGenerator:
             b.append(int("".join(chars[:2]), 16))
             [b.append(ord(j)) for j in chars[2:]]
 
-        b1 = self._encoder.encode(json.dumps(b, separators=(",", ":")))
+        b1 = self._encoder.encode(bytearray(b))
 
         return b1
 

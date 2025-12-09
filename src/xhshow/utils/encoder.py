@@ -3,6 +3,7 @@
 import base64
 import binascii
 
+from typing import Iterable
 from ..config import CryptoConfig
 
 __all__ = ["Base64Encoder"]
@@ -29,7 +30,7 @@ class Base64Encoder:
             config.STANDARD_BASE64_ALPHABET,
         )
 
-    def encode(self, data_to_encode: str) -> str:
+    def encode(self, data_to_encode: bytes | str | Iterable[int]) -> str:
         """
         Encode a string using custom Base64 alphabet
 
@@ -39,7 +40,9 @@ class Base64Encoder:
         Returns:
             Base64 string encoded using custom alphabet
         """
-        data_bytes = data_to_encode.encode("utf-8")
+        data_bytes = data_to_encode
+        if not isinstance(data_to_encode, bytearray):
+            data_bytes = data_to_encode.encode("utf-8")
         standard_encoded_bytes = base64.b64encode(data_bytes)
         standard_encoded_string = standard_encoded_bytes.decode("utf-8")
 
