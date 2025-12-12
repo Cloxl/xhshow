@@ -647,7 +647,7 @@ class TestIntegration:
         # Test unsupported method should raise error
         with pytest.raises(ValueError, match="Unsupported method"):
             client.sign_headers(
-                method="PUT",
+                method="PUT",  # type: ignore[arg-type]
                 uri="/api/test",
                 cookies=cookies,
                 params={"key": "value"},
