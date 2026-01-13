@@ -50,13 +50,13 @@ class Xhshow:
                 params = []
                 for key, value in payload.items():
                     if isinstance(value, list | tuple):
-                        value_str = ','.join(str(v) for v in value)
+                        value_str = ",".join(str(v) for v in value)
                     elif value is not None:
                         value_str = str(value)
                     else:
-                        value_str = ''
+                        value_str = ""
 
-                    encoded_value = urllib.parse.quote(value_str, safe=',')
+                    encoded_value = urllib.parse.quote(value_str, safe=",")
                     params.append(f"{key}={encoded_value}")
 
                 return f"{uri}?{'&'.join(params)}"
