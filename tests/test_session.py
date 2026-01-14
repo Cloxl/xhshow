@@ -206,12 +206,7 @@ def test_sign_xs_get_with_session(mock_crypto_processor):
     uri = "/api/sns/web/v1/homefeed"
     params = {"page": "1", "limit": "20"}
 
-    signature = client.sign_xs_get(
-        uri=uri,
-        a1_value="test_a1",
-        params=params,
-        session=session
-    )
+    signature = client.sign_xs_get(uri=uri, a1_value="test_a1", params=params, session=session)
 
     # Verify signature was generated
     assert signature.startswith("XYS_")
@@ -234,12 +229,7 @@ def test_sign_xs_post_with_session(mock_crypto_processor):
     uri = "/api/sns/web/v1/comment/post"
     payload = {"note_id": "12345", "content": "Great post!"}
 
-    signature = client.sign_xs_post(
-        uri=uri,
-        a1_value="test_a1",
-        payload=payload,
-        session=session
-    )
+    signature = client.sign_xs_post(uri=uri, a1_value="test_a1", payload=payload, session=session)
 
     # Verify signature was generated
     assert signature.startswith("XYS_")
@@ -250,4 +240,3 @@ def test_sign_xs_post_with_session(mock_crypto_processor):
 
     assert actual_state is not None
     assert actual_state.uri_length == len(uri)
-
