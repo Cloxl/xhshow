@@ -1,6 +1,7 @@
 import pytest
 
 from xhshow import Xhshow
+from xhshow.session import SessionManager
 from xhshow.utils.url_utils import build_url, extract_uri
 
 
@@ -149,3 +150,18 @@ class TestXhshowClientUrlMethods:
                 a1_value="test_a1_value",
                 params="invalid",  # type: ignore
             )
+
+    def test_client_sign_with_session(self):
+        client = Xhshow()
+        session = SessionManager()
+        for i in range(10):
+            signature = client.sign_xs_get(
+                uri="/api/sns/web/v1/user_posted",
+                a1_value="test_a1_value",
+                params={"num": "30"},
+                session=session,
+            )
+            session.update_state()
+            print(signature)
+
+        assert signature.startswith("XYS_")

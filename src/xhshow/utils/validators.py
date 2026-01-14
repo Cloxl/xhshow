@@ -110,6 +110,7 @@ def validate_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
         xsec_appid: Any = "xhs-pc-web",
         payload: Any = None,
         timestamp: float | None = None,
+        session: Any = None,
     ):
         validator = RequestSignatureValidator()
 
@@ -127,6 +128,7 @@ def validate_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
             validated_xsec_appid,
             validated_payload,
             timestamp,
+            session,
         )
 
     return wrapper  # type: ignore
@@ -151,6 +153,7 @@ def validate_get_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
         xsec_appid: Any = "xhs-pc-web",
         params: Any = None,
         timestamp: float | None = None,
+        session: Any = None,
     ):
         validator = RequestSignatureValidator()
 
@@ -166,6 +169,7 @@ def validate_get_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
             validated_xsec_appid,
             validated_params,
             timestamp,
+            session,
         )
 
     return wrapper  # type: ignore
@@ -190,6 +194,7 @@ def validate_post_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
         xsec_appid: Any = "xhs-pc-web",
         payload: Any = None,
         timestamp: float | None = None,
+        session: Any = None,
     ):
         validator = RequestSignatureValidator()
 
@@ -205,6 +210,7 @@ def validate_post_signature_params(func: F) -> F:  # type: ignore  # noqa: UP047
             validated_xsec_appid,
             validated_payload,
             timestamp,
+            session,
         )
 
     return wrapper  # type: ignore

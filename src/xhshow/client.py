@@ -2,11 +2,12 @@ import hashlib
 import json
 import time
 import urllib.parse
-from typing import Any, Literal
+from typing import Any, Literal, TYPE_CHECKING
 
 from .config import CryptoConfig
 from .core.common_sign import XsCommonSigner
 from .core.crypto import CryptoProcessor
+from .session import SessionManager, SignState
 from .utils.random_gen import RandomGenerator
 from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
@@ -16,7 +17,10 @@ from .utils.validators import (
     validate_xs_common_params,
 )
 
-__all__ = ["Xhshow"]
+if TYPE_CHECKING:
+    from .session import SessionManager
+
+__all__ = ["Xhshow", "SessionManager", "SignState"]
 
 
 class Xhshow:
@@ -111,6 +115,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
+        session: "SessionManager | None" = None,
     ) -> str:
         """
         Generate request signature (supports GET and POST)
@@ -127,6 +132,7 @@ class Xhshow:
                 - GET request: params value
                 - POST request: payload value
             timestamp: Unix timestamp in seconds (defaults to current time)
+            session: Optional session manager for stateful signing.
 
         Returns:
             str: Complete signature string
@@ -136,15 +142,20 @@ class Xhshow:
             ValueError: Parameter value error
         """
         uri = extract_uri(uri)
+        content_string = self._build_content_string(method, uri, payload)
+        d_value = self._generate_d_value(content_string)
+
+        sign_state = session.get_current_state(content_string) if session else None
+
+        payload_array = self.crypto_processor.build_payload_array(
+            d_value, a1_value, xsec_appid, content_string, timestamp, sign_state=sign_state
+        )
+        xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
+        x3_signature = self.crypto_processor.b64encoder.encode_x3(xor_result[:124])
 
         signature_data = self.crypto_processor.config.SIGNATURE_DATA_TEMPLATE.copy()
+        signature_data["x3"] = self.crypto_processor.config.X3_PREFIX + x3_signature
 
-        content_string = self._build_content_string(method, uri, payload)
-
-        d_value = self._generate_d_value(content_string)
-        signature_data["x3"] = self.crypto_processor.config.X3_PREFIX + self._build_signature(
-            d_value, a1_value, xsec_appid, content_string, timestamp
-        )
         return self.crypto_processor.config.XYS_PREFIX + self.crypto_processor.b64encoder.encode(
             json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
         )
@@ -174,6 +185,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         params: dict[str, Any] | None = None,
         timestamp: float | None = None,
+        session: "SessionManager | None" = None,
     ) -> str:
         """
         Generate GET request signature (convenience method)
@@ -186,6 +198,7 @@ class Xhshow:
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             params: GET request parameters
             timestamp: Unix timestamp in seconds (defaults to current time)
+            session: Optional session manager for stateful signing.
 
         Returns:
             str: Complete signature string
@@ -194,7 +207,7 @@ class Xhshow:
             TypeError: Parameter type error
             ValueError: Parameter value error
         """
-        return self.sign_xs("GET", uri, a1_value, xsec_appid, payload=params, timestamp=timestamp)
+        return self.sign_xs("GET", uri, a1_value, xsec_appid, payload=params, timestamp=timestamp, session=session)
 
     @validate_post_signature_params
     def sign_xs_post(
@@ -204,6 +217,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
+        session: "SessionManager | None" = None,
     ) -> str:
         """
         Generate POST request signature (convenience method)
@@ -216,6 +230,7 @@ class Xhshow:
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             payload: POST request body data
             timestamp: Unix timestamp in seconds (defaults to current time)
+            session: Optional session manager for stateful signing.
 
         Returns:
             str: Complete signature string
@@ -224,7 +239,7 @@ class Xhshow:
             TypeError: Parameter type error
             ValueError: Parameter value error
         """
-        return self.sign_xs("POST", uri, a1_value, xsec_appid, payload=payload, timestamp=timestamp)
+        return self.sign_xs("POST", uri, a1_value, xsec_appid, payload=payload, timestamp=timestamp, session=session)
 
     @validate_xs_common_params
     def sign_xsc(
@@ -406,6 +421,7 @@ class Xhshow:
         params: dict[str, Any] | None = None,
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
+        session: "SessionManager | None" = None,
     ) -> dict[str, str]:
         """
         Generate complete request headers with signature and trace IDs
@@ -418,6 +434,7 @@ class Xhshow:
             params: GET request parameters (only used when method="GET")
             payload: POST request body data (only used when method="POST")
             timestamp: Unix timestamp in seconds (defaults to current time)
+            session: Optional session manager for stateful signing.
 
         Returns:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
@@ -447,7 +464,6 @@ class Xhshow:
 
         method_upper = method.upper()
 
-        # Validate method and parameters
         if method_upper == "GET":
             if payload is not None:
                 raise ValueError("GET requests must use 'params', not 'payload'")
@@ -460,12 +476,11 @@ class Xhshow:
             raise ValueError(f"Unsupported method: {method}")
 
         cookie_dict = self._parse_cookies(cookies)
-
         a1_value = cookie_dict.get("a1")
         if not a1_value:
             raise ValueError("Missing 'a1' in cookies")
 
-        x_s = self.sign_xs(method_upper, uri, a1_value, xsec_appid, request_data, timestamp)
+        x_s = self.sign_xs(method_upper, uri, a1_value, xsec_appid, request_data, timestamp, session)
         x_s_common = self.sign_xs_common(cookie_dict)
         x_t = self.get_x_t(timestamp)
         x_b3_traceid = self.get_b3_trace_id()
@@ -486,6 +501,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         params: dict[str, Any] | None = None,
         timestamp: float | None = None,
+        session: "SessionManager | None" = None,
     ) -> dict[str, str]:
         """
         Generate complete request headers for GET request (convenience method)
@@ -496,20 +512,12 @@ class Xhshow:
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             params: GET request parameters
             timestamp: Unix timestamp in seconds (defaults to current time)
+            session: Optional session manager for stateful signing.
 
         Returns:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
-
-        Examples:
-            >>> client = Xhshow()
-            >>> cookies = {"a1": "your_a1_value", "web_session": "..."}
-            >>> headers = client.sign_headers_get(
-            ...     uri="/api/sns/web/v1/user_posted",
-            ...     cookies=cookies,
-            ...     params={"num": "30"}
-            ... )
         """
-        return self.sign_headers("GET", uri, cookies, xsec_appid, params=params, timestamp=timestamp)
+        return self.sign_headers("GET", uri, cookies, xsec_appid, params=params, timestamp=timestamp, session=session)
 
     def sign_headers_post(
         self,
@@ -518,6 +526,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
+        session: "SessionManager | None" = None,
     ) -> dict[str, str]:
         """
         Generate complete request headers for POST request (convenience method)
@@ -528,17 +537,11 @@ class Xhshow:
             xsec_appid: Application identifier, defaults to `xhs-pc-web`
             payload: POST request body data
             timestamp: Unix timestamp in seconds (defaults to current time)
+            session: Optional session manager for stateful signing.
 
         Returns:
-            dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
-
-        Examples:
-            >>> client = Xhshow()
-            >>> cookies = {"a1": "your_a1_value", "web_session": "..."}
-            >>> headers = client.sign_headers_post(
-            ...     uri="/api/sns/web/v1/login",
-            ...     cookies=cookies,
-            ...     payload={"username": "test", "password": "123456"}
-            ... )
+            dict: Complete headers including x-s, x-s-common, x-t, b3-traceid, x-xray-traceid
         """
-        return self.sign_headers("POST", uri, cookies, xsec_appid, payload=payload, timestamp=timestamp)
+        return self.sign_headers(
+            "POST", uri, cookies, xsec_appid, payload=payload, timestamp=timestamp, session=session
+        )

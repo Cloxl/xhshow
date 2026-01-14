@@ -1,11 +1,16 @@
 import struct
 import time
+from typing import TYPE_CHECKING
 
 from ..config import CryptoConfig
 from ..utils.bit_ops import BitOperations
 from ..utils.encoder import Base64Encoder
 from ..utils.hex_utils import HexProcessor
 from ..utils.random_gen import RandomGenerator
+
+if TYPE_CHECKING:
+    from ..session import SignState
+
 
 __all__ = ["CryptoProcessor"]
 
@@ -57,6 +62,7 @@ class CryptoProcessor:
         app_identifier: str = "xhs-pc-web",
         string_param: str = "",
         timestamp: float | None = None,
+        sign_state: "SignState | None" = None,
     ) -> list[int]:
         """
         Build payload array (t.js version - exact match)
@@ -67,6 +73,7 @@ class CryptoProcessor:
             app_identifier (str): Application identifier, default "xhs-pc-web"
             string_param (str): String parameter (used for URI length calculation)
             timestamp (float | None): Unix timestamp in seconds (defaults to current time)
+            sign_state (SignState | None): Optional state for realistic signature generation.
 
         Returns:
             list[int]: Complete payload byte array (124 bytes)
@@ -84,24 +91,27 @@ class CryptoProcessor:
             timestamp = time.time()
         payload.extend(self.env_fingerprint_a(int(timestamp * 1000), self.config.ENV_FINGERPRINT_XOR_KEY))
 
-        time_offset = self.random_gen.generate_random_byte_in_range(
-            self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
-            self.config.ENV_FINGERPRINT_TIME_OFFSET_MAX,
-        )
-        payload.extend(self.env_fingerprint_b(int((timestamp - time_offset) * 1000)))
+        if sign_state:
+            payload.extend(self.env_fingerprint_b(sign_state.page_load_timestamp))
+            sequence_value = sign_state.sequence_value
+            window_props_length = sign_state.window_props_length
+            uri_length = sign_state.uri_length
+        else:
+            time_offset = self.random_gen.generate_random_byte_in_range(
+                self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
+                self.config.ENV_FINGERPRINT_TIME_OFFSET_MAX,
+            )
+            payload.extend(self.env_fingerprint_b(int((timestamp - time_offset) * 1000)))
+            sequence_value = self.random_gen.generate_random_byte_in_range(
+                self.config.SEQUENCE_VALUE_MIN, self.config.SEQUENCE_VALUE_MAX
+            )
+            window_props_length = self.random_gen.generate_random_byte_in_range(
+                self.config.WINDOW_PROPS_LENGTH_MIN, self.config.WINDOW_PROPS_LENGTH_MAX
+            )
+            uri_length = len(string_param)
 
-        sequence_value = self.random_gen.generate_random_byte_in_range(
-            self.config.SEQUENCE_VALUE_MIN, self.config.SEQUENCE_VALUE_MAX
-        )
         payload.extend(self._int_to_le_bytes(sequence_value, 4))
-
-        window_props_length = self.random_gen.generate_random_byte_in_range(
-            self.config.WINDOW_PROPS_LENGTH_MIN, self.config.WINDOW_PROPS_LENGTH_MAX
-        )
         payload.extend(self._int_to_le_bytes(window_props_length, 4))
-
-        # URI length
-        uri_length = len(string_param)
         payload.extend(self._int_to_le_bytes(uri_length, 4))
 
         # MD5 XOR segment
