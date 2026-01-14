@@ -2,7 +2,7 @@ import hashlib
 import json
 import time
 import urllib.parse
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Any, Literal
 
 from .config import CryptoConfig
 from .core.common_sign import XsCommonSigner
@@ -16,9 +16,6 @@ from .utils.validators import (
     validate_signature_params,
     validate_xs_common_params,
 )
-
-if TYPE_CHECKING:
-    from .session import SessionManager
 
 __all__ = ["Xhshow", "SessionManager", "SignState"]
 
@@ -115,7 +112,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
-        session: "SessionManager | None" = None,
+        session: SessionManager | None = None,
     ) -> str:
         """
         Generate request signature (supports GET and POST)
@@ -145,7 +142,7 @@ class Xhshow:
         content_string = self._build_content_string(method, uri, payload)
         d_value = self._generate_d_value(content_string)
 
-        sign_state = session.get_current_state(content_string) if session else None
+        sign_state = session.get_current_state(uri) if session else None
 
         payload_array = self.crypto_processor.build_payload_array(
             d_value, a1_value, xsec_appid, content_string, timestamp, sign_state=sign_state
@@ -185,7 +182,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         params: dict[str, Any] | None = None,
         timestamp: float | None = None,
-        session: "SessionManager | None" = None,
+        session: SessionManager | None = None,
     ) -> str:
         """
         Generate GET request signature (convenience method)
@@ -217,7 +214,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
-        session: "SessionManager | None" = None,
+        session: SessionManager | None = None,
     ) -> str:
         """
         Generate POST request signature (convenience method)
@@ -421,7 +418,7 @@ class Xhshow:
         params: dict[str, Any] | None = None,
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
-        session: "SessionManager | None" = None,
+        session: SessionManager | None = None,
     ) -> dict[str, str]:
         """
         Generate complete request headers with signature and trace IDs
@@ -501,7 +498,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         params: dict[str, Any] | None = None,
         timestamp: float | None = None,
-        session: "SessionManager | None" = None,
+        session: SessionManager | None = None,
     ) -> dict[str, str]:
         """
         Generate complete request headers for GET request (convenience method)
@@ -526,7 +523,7 @@ class Xhshow:
         xsec_appid: str = "xhs-pc-web",
         payload: dict[str, Any] | None = None,
         timestamp: float | None = None,
-        session: "SessionManager | None" = None,
+        session: SessionManager | None = None,
     ) -> dict[str, str]:
         """
         Generate complete request headers for POST request (convenience method)
@@ -540,7 +537,7 @@ class Xhshow:
             session: Optional session manager for stateful signing.
 
         Returns:
-            dict: Complete headers including x-s, x-s-common, x-t, b3-traceid, x-xray-traceid
+            dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
         """
         return self.sign_headers(
             "POST", uri, cookies, xsec_appid, payload=payload, timestamp=timestamp, session=session

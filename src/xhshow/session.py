@@ -24,7 +24,6 @@ class SessionManager:
         self.page_load_timestamp: int = int(time.time() * 1000)
         self.sequence_value: int = random.randint(15, 17)
         self.window_props_length: int = random.randint(1000, 2000)
-        self.uri_length: int = random.randint(200, 400)
 
     def update_state(self):
         """
@@ -32,17 +31,15 @@ class SessionManager:
 
         This method should be called before each signing operation.
         """
-        # Simulate realistic counter increments
-        # self.sequence_value += random.randint(0, 1)
+        self.sequence_value += random.randint(0, 1)
         self.window_props_length += random.randint(1, 10)
-        self.uri_length += random.randint(0, 2)
 
     def get_current_state(self, uri: str) -> SignState:
         """
-        Get the current signing state, with the option to use real URI length.
+        Get the current signing state for a request.
 
-        For maximum realism, the actual URI length is used, but the internal
-        counter is still maintained for other purposes.
+        This method automatically updates the session state counters and calculates
+        the URI length from the provided URI string.
 
         Args:
             uri (str): The URI string for the current request.
@@ -55,5 +52,5 @@ class SessionManager:
             page_load_timestamp=self.page_load_timestamp,
             sequence_value=self.sequence_value,
             window_props_length=self.window_props_length,
-            uri_length=len(uri),  # Use the real URI length for the signature
+            uri_length=len(uri),
         )

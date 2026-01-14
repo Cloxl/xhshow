@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from xhshow.client import Xhshow
-from xhshow.session import SessionManager
+from xhshow.session import SessionManager, SignState
 
 
 @pytest.fixture
@@ -43,13 +43,9 @@ def test_signing_with_session(mock_crypto_processor):
 
     uri = "/api/sns/web/v1/user/posted"
     cookies = {"a1": "test_a1", "web_session": "test_session"}
-    content_string = uri  # Simplified for this test
 
     # Perform signing
     client.sign_headers_get(uri=uri, cookies=cookies, session=session)
-
-    # Get the expected state from the session
-    expected_state = session.get_current_state(content_string)
 
     # Assert that build_payload_array was called
     mock_crypto_processor.build_payload_array.assert_called_once()
@@ -60,10 +56,11 @@ def test_signing_with_session(mock_crypto_processor):
 
     # Verify the state matches
     assert actual_state is not None
-    assert actual_state.page_load_timestamp == expected_state.page_load_timestamp
-    assert actual_state.sequence_value == expected_state.sequence_value
-    assert actual_state.window_props_length == expected_state.window_props_length
-    assert actual_state.uri_length == len(content_string)
+    assert isinstance(actual_state, SignState)
+    assert actual_state.page_load_timestamp == session.page_load_timestamp
+    assert actual_state.sequence_value == session.sequence_value
+    assert actual_state.window_props_length == session.window_props_length
+    assert actual_state.uri_length == len(uri)
 
 
 def test_signing_without_session(mock_crypto_processor):
