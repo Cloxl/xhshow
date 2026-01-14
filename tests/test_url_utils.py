@@ -154,7 +154,7 @@ class TestXhshowClientUrlMethods:
     def test_client_sign_with_session(self):
         client = Xhshow()
         session = SessionManager()
-        for i in range(10):
+        for _ in range(10):
             signature = client.sign_xs_get(
                 uri="/api/sns/web/v1/user_posted",
                 a1_value="test_a1_value",
