@@ -29,7 +29,7 @@ jobs:
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
           # Generate changelog
-          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "CHANGELOG<<CHANGELOG_EOF" >> $GITHUB_OUTPUT
           if [ -n "$PREV_TAG" ]; then
             echo "## What's Changed" >> $GITHUB_OUTPUT
             echo "" >> $GITHUB_OUTPUT
@@ -40,7 +40,7 @@ jobs:
           else
             echo "Initial release" >> $GITHUB_OUTPUT
           fi
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "CHANGELOG_EOF" >> $GITHUB_OUTPUT
 
           echo "VERSION_NO_V=${VERSION_NO_V}" >> $GITHUB_OUTPUT
 
