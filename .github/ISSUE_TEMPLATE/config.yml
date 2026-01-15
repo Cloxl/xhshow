@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/cloxl/xhshow/discussions
+    about: For questions and discussions about using xhshow
+  - name: 中文讨论区 (Chinese Discussions)
+    url: https://github.com/cloxl/xhshow/discussions
+    about: 使用 xhshow 的问题和讨论
+  - name: Documentation
+    url: https://github.com/cloxl/xhshow#readme
+    about: Check the documentation for usage guides and examples

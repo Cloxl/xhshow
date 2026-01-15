@@ -1,0 +1,80 @@
+name: 功能请求
+description: 提议新功能或改进
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你提出新功能建议!请尽可能提供详细信息。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题陈述
+      description: 你的功能请求是否与某个问题相关?请描述。
+      placeholder: 我在使用时总是遇到...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 提议的解决方案
+      description: 描述你想要的解决方案
+      placeholder: 我希望看到...
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: 使用示例
+      description: 展示你将如何使用这个功能
+      placeholder: |
+        ```python
+        from xhshow import Xhshow
+
+        client = Xhshow()
+        # 新功能的使用示例
+        result = client.new_feature(...)
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案
+      description: 描述你考虑过的任何替代解决方案或功能
+      placeholder: 我还考虑过...
+
+  - type: dropdown
+    id: breaking
+    attributes:
+      label: 破坏性变更
+      description: 这个功能是否需要破坏性变更?
+      options:
+        - "否 - 完全向后兼容"
+        - "是 - 会破坏现有代码"
+        - "不确定"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: compatibility
+    attributes:
+      label: 兼容性要求
+      description: 重要的兼容性考虑
+      options:
+        - label: 此功能必须保持与现有版本的完全向后兼容
+          required: false
+        - label: 我已确认此功能不会与现有功能冲突
+          required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+      description: 添加关于功能请求的其他信息、截图或示例

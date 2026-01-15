@@ -1,0 +1,213 @@
+name: API 提案
+description: 为 xhshow 提议新的语法糖 API 设计
+title: "[API]: "
+labels: ["enhancement", "api-design"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## API 设计提案
+
+        感谢你提出 API 设计建议!此模板帮助构建你的提案以便社区讨论。
+
+        **重要要求:**
+        - 所有新 API 必须完全向后兼容
+        - 关注实际用例和开发者体验
+        - 提供清晰的示例和文档
+
+  - type: input
+    id: api-name
+    attributes:
+      label: API 名称
+      description: 提议的 API 方法/类名称是什么?
+      placeholder: "例如: sign_batch(), XhsClient, auto_refresh_session()"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: api-type
+    attributes:
+      label: API 类型
+      description: 你提议的是什么类型的 API?
+      options:
+        - "新方法"
+        - "新类"
+        - "新参数"
+        - "辅助函数"
+        - "上下文管理器"
+        - "装饰器"
+        - "其他"
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 动机
+      description: 为什么需要这个 API?它解决了什么问题?
+      placeholder: |
+        目前开发者需要...
+        这个 API 将简化...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: 使用场景
+      description: 描述这个 API 解决的具体使用场景
+      placeholder: |
+        在构建网页爬虫时...
+        在处理多个请求时...
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-approach
+    attributes:
+      label: 当前方法 (改进前)
+      description: 开发者目前如何完成这个任务?
+      placeholder: |
+        ```python
+        # 当前冗长的方式
+        client = Xhshow()
+        headers1 = client.sign_headers_get(...)
+        headers2 = client.sign_headers_get(...)
+        headers3 = client.sign_headers_get(...)
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-usage
+    attributes:
+      label: 提议的 API 用法 (改进后)
+      description: 展示你提议的 API 将如何工作
+      placeholder: |
+        ```python
+        # 新的简化方式
+        client = Xhshow()
+        results = client.sign_batch([
+            {"uri": "...", "params": {...}},
+            {"uri": "...", "params": {...}},
+            {"uri": "...", "params": {...}},
+        ])
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: api-signature
+    attributes:
+      label: API 签名
+      description: 提供带类型注解的方法/类签名
+      placeholder: |
+        ```python
+        def sign_batch(
+            self,
+            requests: list[dict[str, Any]],
+            cookies: dict[str, Any] | str,
+            *,
+            xsec_appid: str = "xhs-pc-web",
+            timestamp: float | None = None,
+            session: SessionManager | None = None
+        ) -> list[dict[str, str]]:
+            """
+            批量生成多个请求的签名。
+
+            Args:
+                requests: 请求配置列表
+                cookies: Cookie 字典或字符串
+                xsec_appid: 应用标识符
+                timestamp: Unix 时间戳
+                session: 可选的会话管理器
+
+            Returns:
+                包含签名的请求头字典列表
+
+            Examples:
+                >>> client = Xhshow()
+                >>> results = client.sign_batch([...])
+            """
+            pass
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: 优势
+      description: 这个 API 的主要优势是什么?
+      placeholder: |
+        - 减少 X% 的样板代码
+        - 提升批量操作的性能
+        - 让初学者更容易使用
+        - 遵循 Python 最佳实践
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: compatibility
+    attributes:
+      label: 向后兼容性
+      description: 兼容性承诺
+      options:
+        - label: 此 API 完全向后兼容 (不会破坏现有代码)
+          required: true
+        - label: 此 API 遵循 xhshow 现有的命名约定
+          required: false
+        - label: 我已考虑边界情况和错误处理
+          required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代设计
+      description: 你是否考虑过任何替代的 API 设计?
+      placeholder: |
+        替代方案 1: 使用装饰器模式...
+        替代方案 2: 实现为上下文管理器...
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: 实现说明
+      description: 对如何实现有什么想法吗?
+      placeholder: |
+        可以通过...实现
+        需要的依赖: ...
+        复杂度: 低/中/高
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: 文档影响
+      description: 需要哪些文档变更?
+      placeholder: |
+        - 在 README 中添加新章节
+        - 更新 docs/ 中的示例
+        - 添加文档字符串示例
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: 测试策略
+      description: 应该如何测试这个 API?
+      placeholder: |
+        - 基本功能的单元测试
+        - 真实请求的集成测试
+        - 性能基准测试
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+      description: 任何其他上下文、链接或参考资料?
+      placeholder: |
+        相关 issue: #...
+        其他库中的类似 API: ...
+        参考资料: ...

@@ -1,0 +1,104 @@
+name: Bug 报告
+description: 报告错误或异常行为
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你填写此 Bug 报告!
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug 描述
+      description: 清晰简洁地描述这个 Bug
+      placeholder: 告诉我们你遇到了什么
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 如何复现这个问题
+      placeholder: |
+        1. 导入 xhshow 并调用 '...'
+        2. 调用方法 '...'
+        3. 看到错误
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 清晰地描述你期望发生什么
+      placeholder: 应该发生什么?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 实际发生了什么?
+      placeholder: 实际发生了什么?
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: 代码示例
+      description: 请提供能够复现问题的最小代码示例
+      placeholder: |
+        ```python
+        from xhshow import Xhshow
+
+        client = Xhshow()
+        # 你的代码
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: 错误堆栈
+      description: 如果适用,请粘贴完整的错误堆栈
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: xhshow 版本
+      description: 你使用的 xhshow 版本是什么?
+      placeholder: "0.1.8"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python 版本
+      description: 你使用的 Python 版本是什么?
+      placeholder: "3.12"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统
+      description: 你使用的操作系统是什么?
+      placeholder: "Windows 11 / Ubuntu 22.04 / macOS 14"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+      description: 添加关于此问题的其他信息

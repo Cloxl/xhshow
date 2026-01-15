@@ -1,0 +1,213 @@
+name: API Proposal
+description: Propose a new syntax sugar API design for xhshow
+title: "[API]: "
+labels: ["enhancement", "api-design"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## API Design Proposal
+
+        Thank you for proposing a new API design! This template helps structure your proposal for community discussion.
+
+        **Important Requirements:**
+        - All new APIs must be fully backward compatible
+        - Focus on practical use cases and developer experience
+        - Provide clear examples and documentation
+
+  - type: input
+    id: api-name
+    attributes:
+      label: API Name
+      description: What is the proposed API method/class name?
+      placeholder: "e.g., sign_batch(), XhsClient, auto_refresh_session()"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: api-type
+    attributes:
+      label: API Type
+      description: What type of API are you proposing?
+      options:
+        - "New Method"
+        - "New Class"
+        - "New Parameter"
+        - "Helper Function"
+        - "Context Manager"
+        - "Decorator"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why do we need this API? What problem does it solve?
+      placeholder: |
+        Currently, developers need to...
+        This API would simplify...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe the specific use case this API addresses
+      placeholder: |
+        When building a web scraper that...
+        When handling multiple requests to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-approach
+    attributes:
+      label: Current Approach (Before)
+      description: How do developers currently accomplish this task?
+      placeholder: |
+        ```python
+        # Current verbose way
+        client = Xhshow()
+        headers1 = client.sign_headers_get(...)
+        headers2 = client.sign_headers_get(...)
+        headers3 = client.sign_headers_get(...)
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-usage
+    attributes:
+      label: Proposed API Usage (After)
+      description: Show how your proposed API would work
+      placeholder: |
+        ```python
+        # New simplified way
+        client = Xhshow()
+        results = client.sign_batch([
+            {"uri": "...", "params": {...}},
+            {"uri": "...", "params": {...}},
+            {"uri": "...", "params": {...}},
+        ])
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: api-signature
+    attributes:
+      label: API Signature
+      description: Provide the proposed method/class signature with type hints
+      placeholder: |
+        ```python
+        def sign_batch(
+            self,
+            requests: list[dict[str, Any]],
+            cookies: dict[str, Any] | str,
+            *,
+            xsec_appid: str = "xhs-pc-web",
+            timestamp: float | None = None,
+            session: SessionManager | None = None
+        ) -> list[dict[str, str]]:
+            """
+            Generate signatures for multiple requests in batch.
+
+            Args:
+                requests: List of request configurations
+                cookies: Cookie dictionary or string
+                xsec_appid: Application identifier
+                timestamp: Unix timestamp
+                session: Optional session manager
+
+            Returns:
+                List of header dictionaries with signatures
+
+            Examples:
+                >>> client = Xhshow()
+                >>> results = client.sign_batch([...])
+            """
+            pass
+        ```
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: Benefits
+      description: What are the key benefits of this API?
+      placeholder: |
+        - Reduces boilerplate code by X%
+        - Improves performance for batch operations
+        - Makes the API more intuitive for beginners
+        - Follows Python best practices
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: compatibility
+    attributes:
+      label: Backward Compatibility
+      description: Compatibility commitment
+      options:
+        - label: This API is fully backward compatible (does not break existing code)
+          required: true
+        - label: This API follows existing naming conventions in xhshow
+          required: false
+        - label: I have considered edge cases and error handling
+          required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Designs
+      description: Have you considered any alternative API designs?
+      placeholder: |
+        Alternative 1: Use a decorator pattern...
+        Alternative 2: Implement as a context manager...
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Notes
+      description: Any thoughts on how this could be implemented?
+      placeholder: |
+        This could be implemented by...
+        Dependencies needed: ...
+        Complexity: Low/Medium/High
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation Impact
+      description: What documentation changes would be needed?
+      placeholder: |
+        - Add new section to README
+        - Update examples in docs/
+        - Add docstring examples
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing Strategy
+      description: How should this API be tested?
+      placeholder: |
+        - Unit tests for basic functionality
+        - Integration tests with real requests
+        - Performance benchmarks
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, links, or references?
+      placeholder: |
+        Related issues: #...
+        Similar APIs in other libraries: ...
+        References: ...
