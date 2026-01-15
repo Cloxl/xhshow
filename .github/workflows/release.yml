@@ -16,6 +16,33 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION_NO_V="${VERSION#v}"
+
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Generate changelog
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          if [ -n "$PREV_TAG" ]; then
+            echo "## What's Changed" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${VERSION}" >> $GITHUB_OUTPUT
+          else
+            echo "Initial release" >> $GITHUB_OUTPUT
+          fi
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "VERSION_NO_V=${VERSION_NO_V}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -24,36 +51,64 @@ jobs:
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
+          generate_release_notes: true
           body: |
-            ## 更新内容
+            ${{ steps.release_notes.outputs.CHANGELOG }}
 
-            ## 安装
+            ## Installation
 
             ```bash
-            pip install xhshow==${{ github.ref_name }}
+            pip install xhshow==${{ steps.release_notes.outputs.VERSION_NO_V }}
             ```
 
-            ## 使用方法
+            Or upgrade from previous version:
+
+            ```bash
+            pip install --upgrade xhshow
+            ```
+
+            ## Quick Start
 
             ```python
-            from xhshow import Xhshow
+            from xhshow import Xhshow, SessionManager
 
+            # Basic usage
             client = Xhshow()
 
-            # GET请求签名
+            # GET request signature
             signature = client.sign_xs_get(
                 uri="/api/sns/web/v1/user_posted",
                 a1_value="your_a1_cookie_value",
-                params={"num": "30", "cursor": "", "user_id": "123"}
+                params={"num": "30", "user_id": "123"}
             )
 
-            # POST请求签名
+            # POST request signature
             signature = client.sign_xs_post(
-                uri="/api/sns/web/v1/login",
+                uri="/api/sns/web/v1/comment/post",
                 a1_value="your_a1_cookie_value",
-                payload={"username": "test", "password": "123456"}
+                payload={"note_id": "123", "content": "Great!"}
+            )
+
+            # Generate complete headers with session management
+            session = SessionManager()
+            headers = client.sign_headers_get(
+                uri="/api/sns/web/v1/homefeed",
+                cookies={"a1": "your_a1_value", "web_session": "..."},
+                params={"page": "1"},
+                session=session
             )
             ```
+
+            ## Documentation
+
+            - [GitHub Repository](https://github.com/${{ github.repository }})
+            - [PyPI Package](https://pypi.org/project/xhshow/${{ steps.release_notes.outputs.VERSION_NO_V }}/)
+
+            ## Supported Python Versions
+
+            - Python 3.10+
+            - Python 3.11
+            - Python 3.12
 
   pypi:
     name: Publish to PyPI
