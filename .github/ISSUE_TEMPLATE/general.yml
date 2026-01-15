@@ -1,0 +1,39 @@
+name: 通用讨论 | General Discussion
+description: 其他问题、疑问或讨论 | Other questions, inquiries, or discussions
+title: "[讨论 | Discussion]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        如果你的问题不属于 Bug 报告、功能请求或 API 提案,可以使用此模板。
+        If your issue doesn't fit into Bug Report, Feature Request, or API Proposal, use this template.
+
+  - type: textarea
+    id: content
+    attributes:
+      label: 问题描述 | Description
+      description: 请详细描述你想讨论或咨询的内容 | Please describe what you want to discuss or ask about
+      placeholder: |
+        请尽可能详细地描述你的问题或想法...
+        Please describe your question or idea in detail...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 相关背景 | Context
+      description: 提供相关的背景信息或使用场景 | Provide relevant background or use case
+      placeholder: |
+        例如,你在什么场景下遇到这个问题?
+        For example, in what scenario did you encounter this?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息 | Additional Information
+      description: 添加任何其他相关信息 | Add any other relevant information
+      placeholder: |
+        代码示例、截图、链接等...
+        Code examples, screenshots, links, etc...

@@ -1,75 +1,76 @@
-name: API Proposal
-description: Propose a new syntax sugar API design for xhshow
+name: API 语法糖提案 | API Proposal
+description: 为 xhshow 提议新的语法糖 API 设计 | Propose a new syntax sugar API design for xhshow
 title: "[API]: "
 labels: ["enhancement", "api-design"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## API Design Proposal
+        ## API 设计提案 | API Design Proposal
 
+        感谢你提出 API 设计建议!此模板帮助构建你的提案以便社区讨论。
         Thank you for proposing a new API design! This template helps structure your proposal for community discussion.
 
-        **Important Requirements:**
-        - All new APIs must be fully backward compatible
-        - Focus on practical use cases and developer experience
-        - Provide clear examples and documentation
+        **重要要求 | Important Requirements:**
+        - 所有新 API 必须完全向后兼容 | All new APIs must be fully backward compatible
+        - 关注实际用例和开发者体验 | Focus on practical use cases and developer experience
+        - 提供清晰的示例和文档 | Provide clear examples and documentation
 
   - type: input
     id: api-name
     attributes:
-      label: API Name
-      description: What is the proposed API method/class name?
-      placeholder: "e.g., sign_batch(), XhsClient, auto_refresh_session()"
+      label: API 名称 | API Name
+      description: 提议的 API 方法/类名称 | The proposed API method/class name
+      placeholder: "例如 | e.g.: sign_batch(), XhsClient, auto_refresh_session()"
     validations:
       required: true
 
   - type: dropdown
     id: api-type
     attributes:
-      label: API Type
-      description: What type of API are you proposing?
+      label: API 类型 | API Type
+      description: 你提议的是什么类型的 API? | What type of API are you proposing?
       options:
-        - "New Method"
-        - "New Class"
-        - "New Parameter"
-        - "Helper Function"
-        - "Context Manager"
-        - "Decorator"
-        - "Other"
+        - "新方法 | New Method"
+        - "新类 | New Class"
+        - "新参数 | New Parameter"
+        - "辅助函数 | Helper Function"
+        - "上下文管理器 | Context Manager"
+        - "装饰器 | Decorator"
+        - "其他 | Other"
     validations:
       required: true
 
   - type: textarea
     id: motivation
     attributes:
-      label: Motivation
-      description: Why do we need this API? What problem does it solve?
+      label: 动机 | Motivation
+      description: 为什么需要这个 API?它解决了什么问题? | Why do we need this API? What problem does it solve?
       placeholder: |
-        Currently, developers need to...
-        This API would simplify...
+        目前开发者需要... | Currently, developers need to...
+        这个 API 将简化... | This API would simplify...
     validations:
       required: true
 
   - type: textarea
     id: use-case
     attributes:
-      label: Use Case
-      description: Describe the specific use case this API addresses
+      label: 使用场景 | Use Case
+      description: 描述这个 API 解决的具体使用场景 | Describe the specific use case this API addresses
       placeholder: |
-        When building a web scraper that...
-        When handling multiple requests to...
+        在构建网页爬虫时... | When building a web scraper...
+        在处理多个请求时... | When handling multiple requests...
     validations:
       required: true
 
   - type: textarea
     id: current-approach
     attributes:
-      label: Current Approach (Before)
-      description: How do developers currently accomplish this task?
+      label: 当前方法 (改进前) | Current Approach (Before)
+      description: 开发者目前如何完成这个任务? | How do developers currently accomplish this task?
       placeholder: |
         ```python
-        # Current verbose way
+        # 当前冗长的方式 | Current verbose way
         client = Xhshow()
         headers1 = client.sign_headers_get(...)
         headers2 = client.sign_headers_get(...)
@@ -82,11 +83,11 @@ body:
   - type: textarea
     id: proposed-usage
     attributes:
-      label: Proposed API Usage (After)
-      description: Show how your proposed API would work
+      label: 提议的 API 用法 (改进后) | Proposed API Usage (After)
+      description: 展示你提议的 API 将如何工作 | Show how your proposed API would work
       placeholder: |
         ```python
-        # New simplified way
+        # 新的简化方式 | New simplified way
         client = Xhshow()
         results = client.sign_batch([
             {"uri": "...", "params": {...}},
@@ -101,8 +102,8 @@ body:
   - type: textarea
     id: api-signature
     attributes:
-      label: API Signature
-      description: Provide the proposed method/class signature with type hints
+      label: API 签名 | API Signature
+      description: 提供带类型注解的方法/类签名 | Provide the proposed method/class signature with type hints
       placeholder: |
         ```python
         def sign_batch(
@@ -115,16 +116,18 @@ body:
             session: SessionManager | None = None
         ) -> list[dict[str, str]]:
             """
+            批量生成多个请求的签名。
             Generate signatures for multiple requests in batch.
 
             Args:
-                requests: List of request configurations
-                cookies: Cookie dictionary or string
-                xsec_appid: Application identifier
-                timestamp: Unix timestamp
-                session: Optional session manager
+                requests: 请求配置列表 | List of request configurations
+                cookies: Cookie 字典或字符串 | Cookie dictionary or string
+                xsec_appid: 应用标识符 | Application identifier
+                timestamp: Unix 时间戳 | Unix timestamp
+                session: 可选的会话管理器 | Optional session manager
 
             Returns:
+                包含签名的请求头字典列表
                 List of header dictionaries with signatures
 
             Examples:
@@ -140,74 +143,44 @@ body:
   - type: textarea
     id: benefits
     attributes:
-      label: Benefits
-      description: What are the key benefits of this API?
+      label: 优势 | Benefits
+      description: 这个 API 的主要优势是什么? | What are the key benefits of this API?
       placeholder: |
-        - Reduces boilerplate code by X%
-        - Improves performance for batch operations
-        - Makes the API more intuitive for beginners
-        - Follows Python best practices
+        - 减少 X% 的样板代码 | Reduces boilerplate code by X%
+        - 提升批量操作的性能 | Improves performance for batch operations
+        - 让初学者更容易使用 | Makes the API more intuitive for beginners
+        - 遵循 Python 最佳实践 | Follows Python best practices
     validations:
       required: true
 
   - type: checkboxes
     id: compatibility
     attributes:
-      label: Backward Compatibility
-      description: Compatibility commitment
+      label: 向后兼容性 | Backward Compatibility
+      description: 兼容性承诺 | Compatibility commitment
       options:
-        - label: This API is fully backward compatible (does not break existing code)
+        - label: 此 API 完全向后兼容 (不会破坏现有代码) | This API is fully backward compatible (does not break existing code)
           required: true
-        - label: This API follows existing naming conventions in xhshow
+        - label: 此 API 遵循 xhshow 现有的命名约定 | This API follows existing naming conventions in xhshow
           required: false
-        - label: I have considered edge cases and error handling
+        - label: 我已考虑边界情况和错误处理 | I have considered edge cases and error handling
           required: false
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternative Designs
-      description: Have you considered any alternative API designs?
+      label: 替代设计 | Alternative Designs
+      description: 你是否考虑过任何替代的 API 设计? | Have you considered any alternative API designs?
       placeholder: |
-        Alternative 1: Use a decorator pattern...
-        Alternative 2: Implement as a context manager...
-
-  - type: textarea
-    id: implementation
-    attributes:
-      label: Implementation Notes
-      description: Any thoughts on how this could be implemented?
-      placeholder: |
-        This could be implemented by...
-        Dependencies needed: ...
-        Complexity: Low/Medium/High
-
-  - type: textarea
-    id: documentation
-    attributes:
-      label: Documentation Impact
-      description: What documentation changes would be needed?
-      placeholder: |
-        - Add new section to README
-        - Update examples in docs/
-        - Add docstring examples
-
-  - type: textarea
-    id: testing
-    attributes:
-      label: Testing Strategy
-      description: How should this API be tested?
-      placeholder: |
-        - Unit tests for basic functionality
-        - Integration tests with real requests
-        - Performance benchmarks
+        替代方案 1: 使用装饰器模式... | Alternative 1: Use a decorator pattern...
+        替代方案 2: 实现为上下文管理器... | Alternative 2: Implement as a context manager...
 
   - type: textarea
     id: additional
     attributes:
-      label: Additional Context
-      description: Any other context, links, or references?
+      label: 补充信息 | Additional Context
+      description: 任何其他上下文、链接或参考资料? | Any other context, links, or references?
       placeholder: |
-        Related issues: #...
-        Similar APIs in other libraries: ...
-        References: ...
+        相关 issue | Related issues: #...
+        其他库中的类似 API | Similar APIs in other libraries: ...
+        参考资料 | References: ...
