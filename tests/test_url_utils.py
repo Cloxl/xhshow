@@ -161,6 +161,5 @@ class TestXhshowClientUrlMethods:
                 params={"num": "30"},
                 session=session,
             )
-            session.update_state()
 
         assert signature.startswith("XYS_")
