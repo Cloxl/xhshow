@@ -199,6 +199,80 @@ headers = {
 
 </details>
 
+### 会话管理（实验性功能）
+
+`SessionManager` 用于模拟真实用户会话，维护状态化的签名参数，可能有助于提升长期稳定性。
+
+**注意**：此功能基于 [#86](https://github.com/Cloxl/xhshow/issues/86) 理论分析，实际效果待验证。建议先在测试环境使用。
+
+#### 基本使用
+
+```python
+from xhshow import Xhshow, SessionManager
+import requests
+
+client = Xhshow()
+session = SessionManager()  # 创建会话管理器
+
+cookies = {"a1": "...", "web_session": "...", "webId": "..."}
+
+# 使用 session 参数进行签名
+headers = client.sign_headers_get(
+    uri="/api/sns/web/v1/user_posted",
+    cookies=cookies,
+    params={"num": "30"},
+    session=session  # 传入 session
+)
+
+response = requests.get(
+    "https://edith.xiaohongshu.com/api/sns/web/v1/user_posted",
+    params={"num": "30"},
+    headers=headers,
+    cookies=cookies
+)
+
+# 同一个 session 可以在多次请求中复用
+headers2 = client.sign_headers_get(
+    uri="/api/sns/web/v1/homefeed",
+    cookies=cookies,
+    params={"page": "1"},
+    session=session  # 复用同一个 session
+)
+```
+
+#### 账户池管理
+
+如果你有多个账户，需要为每个账户创建独立的 `SessionManager`：
+
+```python
+accounts = [
+    {"a1": "account1_a1", "web_session": "session1"},
+    {"a1": "account2_a1", "web_session": "session2"},
+]
+
+# 为每个账户创建独立的 session
+sessions = {}
+for account in accounts:
+    sessions[account["a1"]] = SessionManager()
+
+# 使用时匹配账户和对应的 session
+for account in accounts:
+    headers = client.sign_headers_get(
+        uri="/api/sns/web/v1/user_posted",
+        cookies=account,
+        params={"num": "30"},
+        session=sessions[account["a1"]]  # 使用对应账户的 session
+    )
+```
+
+#### 工作原理
+
+- **无 Session**：每次请求生成随机参数，可能被识别为机器人行为
+- **有 Session**：维护固定的页面加载时间戳和单调递增的计数器，模拟真实用户在同一页面中的连续操作
+
+**适用场景：**
+- 长期运行的爬虫或服务
+
 ### 解密签名
 
 ```python
