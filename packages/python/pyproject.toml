@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
 name = "xhshow"
-dynamic = ["version"]
+version = "0.1.8"
 description = "XHS API signature generator"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,12 +41,6 @@ Issues = "https://github.com/cloxl/xhshow/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/xhshow"]
-
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.build.hooks.vcs]
-version-file = "src/xhshow/_version.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
