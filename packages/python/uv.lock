@@ -282,6 +282,7 @@ wheels = [
 
 [[package]]
 name = "xhshow"
+version = "0.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "pycryptodome" },

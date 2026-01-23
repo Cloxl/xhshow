@@ -154,15 +154,23 @@ Desktop.ini
 *.temp
 *~
 
+# Ignore all txt files except version.txt
 *.txt
+!version.txt
+
 _version.py
 node_modules/
 
-# Local test files (root directory only)
+# Local test files (numbered test scripts anywhere in the project)
+[0-9].py
+[0-9][0-9].py
+
+# Root directory temporary files only
 /*.js
-/*.py
 !setup.py
-package.json
-package-lock.json
-pnpm-lock.yaml
-yarn.lock
+
+# Node.js files (root only)
+/package.json
+/package-lock.json
+/pnpm-lock.yaml
+/yarn.lock
