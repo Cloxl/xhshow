@@ -64,10 +64,15 @@ class CryptoProcessor:
         t2 = (s2 + t1) & self.config.MAX_32BIT
         t3 = s3 ^ t2
 
-        s0 = (self._rotate_left(t0, 9) + (s2 := self._rotate_left(t2, 17))) & self.config.MAX_32BIT
-        s1 = (s1 := self._rotate_left(t1, 13)) ^ (s3 := self._rotate_left(t3, 19))
-        s2 = (s2 + s0) & self.config.MAX_32BIT
-        s3 = s3 ^ s1
+        rot_t0 = self._rotate_left(t0, 9)
+        rot_t1 = self._rotate_left(t1, 13)
+        rot_t2 = self._rotate_left(t2, 17)
+        rot_t3 = self._rotate_left(t3, 19)
+
+        s0 = (rot_t0 + rot_t2) & self.config.MAX_32BIT
+        s1 = rot_t1 ^ rot_t3
+        s2 = (rot_t2 + s0) & self.config.MAX_32BIT
+        s3 = rot_t3 ^ s1
 
         result = []
         for s in [s0, s1, s2, s3]:
@@ -113,40 +118,28 @@ class CryptoProcessor:
             payload.extend(self._int_to_le_bytes(sign_state.window_props_length, 4))
             payload.extend(self._int_to_le_bytes(sign_state.uri_length, 4))
         else:
-            payload.extend(
-                self._int_to_le_bytes(
-                    int(
-                        (
-                            timestamp
-                            - self.random_gen.generate_random_byte_in_range(
-                                self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
-                                self.config.ENV_FINGERPRINT_TIME_OFFSET_MAX,
-                            )
-                        )
-                        * 1000
-                    ),
-                    self.config.TIMESTAMP_LE_LENGTH,
-                )
+            time_offset = self.random_gen.generate_random_byte_in_range(
+                self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
+                self.config.ENV_FINGERPRINT_TIME_OFFSET_MAX,
             )
-            payload.extend(
-                self._int_to_le_bytes(
-                    self.random_gen.generate_random_byte_in_range(
-                        self.config.SEQUENCE_VALUE_MIN, self.config.SEQUENCE_VALUE_MAX
-                    ),
-                    4,
-                )
-            )
-            payload.extend(
-                self._int_to_le_bytes(
-                    self.random_gen.generate_random_byte_in_range(
-                        self.config.WINDOW_PROPS_LENGTH_MIN, self.config.WINDOW_PROPS_LENGTH_MAX
-                    ),
-                    4,
-                )
-            )
-            payload.extend(self._int_to_le_bytes(len(string_param.encode("utf-8")), 4))
+            effective_ts_ms = int((timestamp - time_offset) * 1000)
+            payload.extend(self._int_to_le_bytes(effective_ts_ms, self.config.TIMESTAMP_LE_LENGTH))
 
-        payload.extend([bytes.fromhex(hex_parameter)[i] ^ seed_byte for i in range(self.config.MD5_XOR_LENGTH)])
+            sequence_value = self.random_gen.generate_random_byte_in_range(
+                self.config.SEQUENCE_VALUE_MIN, self.config.SEQUENCE_VALUE_MAX
+            )
+            payload.extend(self._int_to_le_bytes(sequence_value, 4))
+
+            window_props_length = self.random_gen.generate_random_byte_in_range(
+                self.config.WINDOW_PROPS_LENGTH_MIN, self.config.WINDOW_PROPS_LENGTH_MAX
+            )
+            payload.extend(self._int_to_le_bytes(window_props_length, 4))
+
+            uri_length = len(string_param.encode("utf-8"))
+            payload.extend(self._int_to_le_bytes(uri_length, 4))
+
+        md5_bytes = bytes.fromhex(hex_parameter)
+        payload.extend([md5_bytes[i] ^ seed_byte for i in range(self.config.MD5_XOR_LENGTH)])
 
         a1_bytes = a1_value.encode("utf-8")[: self.config.A1_LENGTH].ljust(self.config.A1_LENGTH, b"\x00")
         payload.append(len(a1_bytes))
@@ -159,13 +152,13 @@ class CryptoProcessor:
         payload.extend(app_bytes)
 
         part11 = [1, seed_byte ^ self.config.ENV_TABLE[0]]
-        part11.extend(self.config.ENV_TABLE[i] ^ self.config.ENV_CHECKS_DEFAULT[i] for i in range(1, 15))
+        part11 += [self.config.ENV_TABLE[i] ^ self.config.ENV_CHECKS_DEFAULT[i] for i in range(1, 15)]
         payload.extend(part11)
 
         api_path = extract_api_path(string_param)
-        md5_path_bytes = [
-            int(hashlib.md5(api_path.encode("utf-8")).hexdigest()[i : i + 2], 16) for i in range(0, 32, 2)
-        ]
+        api_path_bytes = api_path.encode("utf-8")
+        hex_md5 = hashlib.md5(api_path_bytes).hexdigest()
+        md5_path_bytes = [int(hex_md5[i : i + 2], 16) for i in range(0, 32, 2)]
 
         payload.extend(self.config.A3_PREFIX + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)])
 
