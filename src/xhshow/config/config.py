@@ -36,6 +36,12 @@ class CryptoConfig:
 
     # Payload construction constants
     VERSION_BYTES: list[int] = field(default_factory=lambda: [121, 104, 96, 41])
+    PAYLOAD_LENGTH: int = 144
+    A1_LENGTH: int = 52
+    APP_ID_LENGTH: int = 10
+    MD5_XOR_LENGTH: int = 8
+    A3_PREFIX: list[int] = field(default_factory=lambda: [2, 97, 51, 16])
+    TIMESTAMP_LE_LENGTH: int = 8
 
     # Random value ranges
     SEQUENCE_VALUE_MIN: int = 15

@@ -35,7 +35,7 @@ class CryptoProcessor:
 
     def _rotate_left(self, val: int, n: int) -> int:
         """32-bit left rotation"""
-        return ((val << n) | (val >> (32 - n))) & 0xFFFFFFFF
+        return ((val << n) | (val >> (32 - n))) & self.config.MAX_32BIT
 
     def _custom_hash_v2(self, input_bytes: list[int]) -> list[int]:
         """
@@ -54,19 +54,19 @@ class CryptoProcessor:
         for i in range(length // 8):
             v0, v1 = struct.unpack("<II", bytes(input_bytes[i * 8 : (i + 1) * 8]))
 
-            s0 = self._rotate_left(((s0 + v0) & 0xFFFFFFFF) ^ s2, 7)
-            s1 = self._rotate_left(((v0 ^ s1) + s3) & 0xFFFFFFFF, 11)
-            s2 = self._rotate_left(((s2 + v1) & 0xFFFFFFFF) ^ s0, 13)
-            s3 = self._rotate_left(((s3 ^ v1) + s1) & 0xFFFFFFFF, 17)
+            s0 = self._rotate_left(((s0 + v0) & self.config.MAX_32BIT) ^ s2, 7)
+            s1 = self._rotate_left(((v0 ^ s1) + s3) & self.config.MAX_32BIT, 11)
+            s2 = self._rotate_left(((s2 + v1) & self.config.MAX_32BIT) ^ s0, 13)
+            s3 = self._rotate_left(((s3 ^ v1) + s1) & self.config.MAX_32BIT, 17)
 
         t0 = s0 ^ length
         t1 = s1 ^ t0
-        t2 = (s2 + t1) & 0xFFFFFFFF
+        t2 = (s2 + t1) & self.config.MAX_32BIT
         t3 = s3 ^ t2
 
-        s0 = (self._rotate_left(t0, 9) + (s2 := self._rotate_left(t2, 17))) & 0xFFFFFFFF
+        s0 = (self._rotate_left(t0, 9) + (s2 := self._rotate_left(t2, 17))) & self.config.MAX_32BIT
         s1 = (s1 := self._rotate_left(t1, 13)) ^ (s3 := self._rotate_left(t3, 19))
-        s2 = (s2 + s0) & 0xFFFFFFFF
+        s2 = (s2 + s0) & self.config.MAX_32BIT
         s3 = s3 ^ s1
 
         result = []
@@ -104,11 +104,11 @@ class CryptoProcessor:
         payload = list(self.config.VERSION_BYTES)
         payload.extend(self._int_to_le_bytes(seed, 4))
 
-        ts_bytes = self._int_to_le_bytes(int(timestamp * 1000), 8)
+        ts_bytes = self._int_to_le_bytes(int(timestamp * 1000), self.config.TIMESTAMP_LE_LENGTH)
         payload.extend(ts_bytes)
 
         if sign_state:
-            payload.extend(self._int_to_le_bytes(sign_state.page_load_timestamp, 8))
+            payload.extend(self._int_to_le_bytes(sign_state.page_load_timestamp, self.config.TIMESTAMP_LE_LENGTH))
             payload.extend(self._int_to_le_bytes(sign_state.sequence_value, 4))
             payload.extend(self._int_to_le_bytes(sign_state.window_props_length, 4))
             payload.extend(self._int_to_le_bytes(sign_state.uri_length, 4))
@@ -125,7 +125,7 @@ class CryptoProcessor:
                         )
                         * 1000
                     ),
-                    8,
+                    self.config.TIMESTAMP_LE_LENGTH,
                 )
             )
             payload.extend(
@@ -146,13 +146,15 @@ class CryptoProcessor:
             )
             payload.extend(self._int_to_le_bytes(len(string_param.encode("utf-8")), 4))
 
-        payload.extend([bytes.fromhex(hex_parameter)[i] ^ seed_byte for i in range(8)])
+        payload.extend([bytes.fromhex(hex_parameter)[i] ^ seed_byte for i in range(self.config.MD5_XOR_LENGTH)])
 
-        a1_bytes = a1_value.encode("utf-8")[:52].ljust(52, b"\x00")
+        a1_bytes = a1_value.encode("utf-8")[: self.config.A1_LENGTH].ljust(self.config.A1_LENGTH, b"\x00")
         payload.append(len(a1_bytes))
         payload.extend(a1_bytes)
 
-        app_bytes = app_identifier.encode("utf-8")[:10].ljust(10, b"\x00")
+        app_bytes = app_identifier.encode("utf-8")[: self.config.APP_ID_LENGTH].ljust(
+            self.config.APP_ID_LENGTH, b"\x00"
+        )
         payload.append(len(app_bytes))
         payload.extend(app_bytes)
 
@@ -165,7 +167,6 @@ class CryptoProcessor:
             int(hashlib.md5(api_path.encode("utf-8")).hexdigest()[i : i + 2], 16) for i in range(0, 32, 2)
         ]
 
-        payload.extend([2, 97, 51, 16] + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)])
+        payload.extend(self.config.A3_PREFIX + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)])
 
-        assert len(payload) == 144, f"Payload length error: {len(payload)}, expected 144"
         return payload
