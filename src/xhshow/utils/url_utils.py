@@ -1,6 +1,40 @@
 from urllib.parse import urlparse
 
-__all__ = ["extract_uri", "build_url"]
+__all__ = ["extract_uri", "build_url", "extract_api_path"]
+
+
+def extract_api_path(uri_with_data: str) -> str:
+    """
+    Extract pure API path from URI (removes query params and JSON body)
+
+    Args:
+        uri_with_data: URI that may contain query params or JSON body
+            - With JSON body: "/api/homefeed{\"num\":47}"
+            - With query params: "/api/homefeed?num=47"
+            - Plain URI: "/api/homefeed"
+
+    Returns:
+        str: Pure API path without params or body
+
+    Examples:
+        >>> extract_api_path('/api/homefeed{"num":47}')
+        '/api/homefeed'
+        >>> extract_api_path('/api/homefeed?num=47')
+        '/api/homefeed'
+        >>> extract_api_path('/api/homefeed')
+        '/api/homefeed'
+    """
+    brace_pos = uri_with_data.find("{")
+    question_pos = uri_with_data.find("?")
+
+    if brace_pos != -1 and question_pos != -1:
+        return uri_with_data[: min(brace_pos, question_pos)]
+    elif brace_pos != -1:
+        return uri_with_data[:brace_pos]
+    elif question_pos != -1:
+        return uri_with_data[:question_pos]
+    else:
+        return uri_with_data
 
 
 def extract_uri(url: str) -> str:

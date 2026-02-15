@@ -26,8 +26,8 @@ class CryptoConfig:
     CUSTOM_BASE64_ALPHABET: str = "ZmserbBoHQtNP+wOcza/LpngG8yJq42KWYj0DSfdikx3VT16IlUAFM97hECvuRX5"
     X3_BASE64_ALPHABET: str = "MfgqrsbcyzPQRStuvC7mn501HIJBo2DEFTKdeNOwxWXYZap89+/A4UVLhijkl63G"
 
-    # XOR key for payload transformation (124 bytes)
-    HEX_KEY: str = "71a302257793271ddd273bcee3e4b98d9d7935e1da33f5765e2ea8afb6dc77a51a499d23b67c20660025860cbf13d4540d92497f58686c574e508f46e1956344f39139bf4faf22a3eef120b79258145b2feb5193b6478669961298e79bedca646e1a693a926154a5a7a1bd1cf0dedb742f917a747a1e388b234f2277"  # noqa: E501
+    # XOR key for payload transformation (144 bytes)
+    HEX_KEY: str = "71a302257793271ddd273bcee3e4b98d9d7935e1da33f5765e2ea8afb6dc77a51a499d23b67c20660025860cbf13d4540d92497f58686c574e508f46e1956344f39139bf4faf22a3eef120b79258145b2feb5193b6478669961298e79bedca646e1a693a926154a5a7a1bd1cf0dedb742f917a747a1e388b234f2277516db7116035439730fa61e9822a0eca7bff72d8"  # noqa: E501
 
     # Hexadecimal processing constants
     EXPECTED_HEX_LENGTH: int = 32
@@ -35,7 +35,7 @@ class CryptoConfig:
     HEX_CHUNK_SIZE: int = 2
 
     # Payload construction constants
-    VERSION_BYTES: list[int] = field(default_factory=lambda: [119, 104, 96, 41])
+    VERSION_BYTES: list[int] = field(default_factory=lambda: [121, 104, 96, 41])
 
     # Random value ranges
     SEQUENCE_VALUE_MIN: int = 15
@@ -49,6 +49,19 @@ class CryptoConfig:
     CHECKSUM_FIXED_TAIL: list[int] = field(
         default_factory=lambda: [249, 65, 103, 103, 201, 181, 131, 99, 94, 7, 68, 250, 132, 21]
     )
+
+    # Environment detection constants (15 values for part11 XOR)
+    ENV_TABLE: list[int] = field(
+        default_factory=lambda: [115, 248, 83, 102, 103, 201, 181, 131, 99, 94, 4, 68, 250, 132, 21]
+    )
+
+    # Default environment check values (normal browser)
+    ENV_CHECKS_DEFAULT: list[int] = field(
+        default_factory=lambda: [0, 1, 18, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0]
+    )
+
+    # custom_hash_v2 initial vector
+    HASH_IV: tuple[int, int, int, int] = (1831565813, 461845907, 2246822507, 3266489909)
 
     # Environment fingerprint generation parameters
     ENV_FINGERPRINT_XOR_KEY: int = 41

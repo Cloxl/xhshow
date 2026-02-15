@@ -1,3 +1,4 @@
+import hashlib
 import struct
 import time
 from typing import TYPE_CHECKING
@@ -7,6 +8,7 @@ from ..utils.bit_ops import BitOperations
 from ..utils.encoder import Base64Encoder
 from ..utils.hex_utils import HexProcessor
 from ..utils.random_gen import RandomGenerator
+from ..utils.url_utils import extract_api_path
 
 if TYPE_CHECKING:
     from ..session import SignState
@@ -31,29 +33,46 @@ class CryptoProcessor:
             val >>= 8
         return arr
 
-    def _str_to_len_prefixed_bytes(self, s: str) -> list[int]:
-        """Convert UTF-8 string to byte array with 1-byte length prefix"""
-        buf = s.encode("utf-8")
-        return [len(buf)] + list(buf)
+    def _rotate_left(self, val: int, n: int) -> int:
+        """32-bit left rotation"""
+        return ((val << n) | (val >> (32 - n))) & 0xFFFFFFFF
 
-    def env_fingerprint_a(self, ts: int, xor_key: int) -> list[int]:
-        """Generate environment fingerprint A with checksum"""
-        data = bytearray(struct.pack("<Q", ts))
+    def _custom_hash_v2(self, input_bytes: list[int]) -> list[int]:
+        """
+        Custom hash function for a3 field generation
+        Input: byte list (must be multiple of 8)
+        Output: 16-byte list
+        """
+        s0, s1, s2, s3 = self.config.HASH_IV
+        length = len(input_bytes)
 
-        sum1 = sum(data[1:5])
-        sum2 = sum(data[5:8])
+        s0 ^= length
+        s1 ^= length << 8
+        s2 ^= length << 16
+        s3 ^= length << 24
 
-        mark = ((sum1 & 0xFF) + sum2) & 0xFF
-        data[0] = mark
+        for i in range(length // 8):
+            v0, v1 = struct.unpack("<II", bytes(input_bytes[i * 8 : (i + 1) * 8]))
 
-        for i in range(len(data)):
-            data[i] ^= xor_key
+            s0 = self._rotate_left(((s0 + v0) & 0xFFFFFFFF) ^ s2, 7)
+            s1 = self._rotate_left(((v0 ^ s1) + s3) & 0xFFFFFFFF, 11)
+            s2 = self._rotate_left(((s2 + v1) & 0xFFFFFFFF) ^ s0, 13)
+            s3 = self._rotate_left(((s3 ^ v1) + s1) & 0xFFFFFFFF, 17)
 
-        return list(data)
+        t0 = s0 ^ length
+        t1 = s1 ^ t0
+        t2 = (s2 + t1) & 0xFFFFFFFF
+        t3 = s3 ^ t2
 
-    def env_fingerprint_b(self, ts: int) -> list[int]:
-        """Generate simple environment fingerprint B (no encryption)"""
-        return list(struct.pack("<Q", ts))
+        s0 = (self._rotate_left(t0, 9) + (s2 := self._rotate_left(t2, 17))) & 0xFFFFFFFF
+        s1 = (s1 := self._rotate_left(t1, 13)) ^ (s3 := self._rotate_left(t3, 19))
+        s2 = (s2 + s0) & 0xFFFFFFFF
+        s3 = s3 ^ s1
+
+        result = []
+        for s in [s0, s1, s2, s3]:
+            result.extend(self._int_to_le_bytes(s, 4))
+        return result
 
     def build_payload_array(
         self,
@@ -65,86 +84,88 @@ class CryptoProcessor:
         sign_state: "SignState | None" = None,
     ) -> list[int]:
         """
-        Build payload array (t.js version - exact match)
+        Build 144-byte payload array (mns0301 version)
 
         Args:
-            hex_parameter (str): 32-character hexadecimal parameter (MD5 hash)
+            hex_parameter (str): 32-character hexadecimal parameter (MD5 hash of uri+data)
             a1_value (str): a1 value from cookies
             app_identifier (str): Application identifier, default "xhs-pc-web"
-            string_param (str): String parameter (used for URI length calculation)
+            string_param (str): String parameter (URI+data for MD5 and length calculation)
             timestamp (float | None): Unix timestamp in seconds (defaults to current time)
             sign_state (SignState | None): Optional state for realistic signature generation.
 
         Returns:
-            list[int]: Complete payload byte array (124 bytes)
+            list[int]: Complete payload byte array (144 bytes)
         """
-        payload = []
-
-        payload.extend(self.config.VERSION_BYTES)
-
+        timestamp = time.time() if timestamp is None else timestamp
         seed = self.random_gen.generate_random_int()
-        seed_bytes = self._int_to_le_bytes(seed, 4)
-        payload.extend(seed_bytes)
-        seed_byte_0 = seed_bytes[0]
+        seed_byte = seed & 0xFF
 
-        if timestamp is None:
-            timestamp = time.time()
-        payload.extend(self.env_fingerprint_a(int(timestamp * 1000), self.config.ENV_FINGERPRINT_XOR_KEY))
+        payload = list(self.config.VERSION_BYTES)
+        payload.extend(self._int_to_le_bytes(seed, 4))
+
+        ts_bytes = self._int_to_le_bytes(int(timestamp * 1000), 8)
+        payload.extend(ts_bytes)
 
         if sign_state:
-            payload.extend(self.env_fingerprint_b(sign_state.page_load_timestamp))
-            sequence_value = sign_state.sequence_value
-            window_props_length = sign_state.window_props_length
-            uri_length = sign_state.uri_length
+            payload.extend(self._int_to_le_bytes(sign_state.page_load_timestamp, 8))
+            payload.extend(self._int_to_le_bytes(sign_state.sequence_value, 4))
+            payload.extend(self._int_to_le_bytes(sign_state.window_props_length, 4))
+            payload.extend(self._int_to_le_bytes(sign_state.uri_length, 4))
         else:
-            time_offset = self.random_gen.generate_random_byte_in_range(
-                self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
-                self.config.ENV_FINGERPRINT_TIME_OFFSET_MAX,
+            payload.extend(
+                self._int_to_le_bytes(
+                    int(
+                        (
+                            timestamp
+                            - self.random_gen.generate_random_byte_in_range(
+                                self.config.ENV_FINGERPRINT_TIME_OFFSET_MIN,
+                                self.config.ENV_FINGERPRINT_TIME_OFFSET_MAX,
+                            )
+                        )
+                        * 1000
+                    ),
+                    8,
+                )
             )
-            payload.extend(self.env_fingerprint_b(int((timestamp - time_offset) * 1000)))
-            sequence_value = self.random_gen.generate_random_byte_in_range(
-                self.config.SEQUENCE_VALUE_MIN, self.config.SEQUENCE_VALUE_MAX
+            payload.extend(
+                self._int_to_le_bytes(
+                    self.random_gen.generate_random_byte_in_range(
+                        self.config.SEQUENCE_VALUE_MIN, self.config.SEQUENCE_VALUE_MAX
+                    ),
+                    4,
+                )
             )
-            window_props_length = self.random_gen.generate_random_byte_in_range(
-                self.config.WINDOW_PROPS_LENGTH_MIN, self.config.WINDOW_PROPS_LENGTH_MAX
+            payload.extend(
+                self._int_to_le_bytes(
+                    self.random_gen.generate_random_byte_in_range(
+                        self.config.WINDOW_PROPS_LENGTH_MIN, self.config.WINDOW_PROPS_LENGTH_MAX
+                    ),
+                    4,
+                )
             )
-            uri_length = len(string_param)
+            payload.extend(self._int_to_le_bytes(len(string_param.encode("utf-8")), 4))
 
-        payload.extend(self._int_to_le_bytes(sequence_value, 4))
-        payload.extend(self._int_to_le_bytes(window_props_length, 4))
-        payload.extend(self._int_to_le_bytes(uri_length, 4))
+        payload.extend([bytes.fromhex(hex_parameter)[i] ^ seed_byte for i in range(8)])
 
-        # MD5 XOR segment
-        md5_bytes = bytes.fromhex(hex_parameter)
-        for i in range(8):
-            payload.append(md5_bytes[i] ^ seed_byte_0)
-
-        # A1 length
-        payload.append(52)
-
-        # A1 content
-        a1_bytes = a1_value.encode("utf-8")
-        if len(a1_bytes) > 52:
-            a1_bytes = a1_bytes[:52]
-        elif len(a1_bytes) < 52:
-            a1_bytes = a1_bytes + b"\x00" * (52 - len(a1_bytes))
+        a1_bytes = a1_value.encode("utf-8")[:52].ljust(52, b"\x00")
+        payload.append(len(a1_bytes))
         payload.extend(a1_bytes)
 
-        # Source length
-        payload.append(10)
+        app_bytes = app_identifier.encode("utf-8")[:10].ljust(10, b"\x00")
+        payload.append(len(app_bytes))
+        payload.extend(app_bytes)
 
-        # Source content
-        source_bytes = app_identifier.encode("utf-8")
-        if len(source_bytes) > 10:
-            source_bytes = source_bytes[:10]
-        elif len(source_bytes) < 10:
-            source_bytes = source_bytes + b"\x00" * (10 - len(source_bytes))
-        payload.extend(source_bytes)
+        part11 = [1, seed_byte ^ self.config.ENV_TABLE[0]]
+        part11.extend(self.config.ENV_TABLE[i] ^ self.config.ENV_CHECKS_DEFAULT[i] for i in range(1, 15))
+        payload.extend(part11)
 
-        payload.append(1)
+        api_path = extract_api_path(string_param)
+        md5_path_bytes = [int(hashlib.md5(api_path.encode("utf-8")).hexdigest()[i : i + 2], 16) for i in range(0, 32, 2)]
 
-        payload.append(self.config.CHECKSUM_VERSION)
-        payload.append(seed_byte_0 ^ self.config.CHECKSUM_XOR_KEY)
-        payload.extend(self.config.CHECKSUM_FIXED_TAIL)
+        payload.extend(
+            [2, 97, 51, 16] + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)]
+        )
 
+        assert len(payload) == 144, f"Payload length error: {len(payload)}, expected 144"
         return payload

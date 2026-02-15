@@ -101,7 +101,7 @@ class Xhshow:
 
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
 
-        return self.crypto_processor.b64encoder.encode_x3(xor_result[:124])
+        return self.crypto_processor.b64encoder.encode_x3(xor_result[:144])
 
     @validate_signature_params
     def sign_xs(
@@ -148,7 +148,7 @@ class Xhshow:
             d_value, a1_value, xsec_appid, content_string, timestamp, sign_state=sign_state
         )
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
-        x3_signature = self.crypto_processor.b64encoder.encode_x3(xor_result[:124])
+        x3_signature = self.crypto_processor.b64encoder.encode_x3(xor_result[:144])
 
         signature_data = self.crypto_processor.config.SIGNATURE_DATA_TEMPLATE.copy()
         signature_data["x3"] = self.crypto_processor.config.X3_PREFIX + x3_signature
