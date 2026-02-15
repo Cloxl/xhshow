@@ -161,11 +161,11 @@ class CryptoProcessor:
         payload.extend(part11)
 
         api_path = extract_api_path(string_param)
-        md5_path_bytes = [int(hashlib.md5(api_path.encode("utf-8")).hexdigest()[i : i + 2], 16) for i in range(0, 32, 2)]
+        md5_path_bytes = [
+            int(hashlib.md5(api_path.encode("utf-8")).hexdigest()[i : i + 2], 16) for i in range(0, 32, 2)
+        ]
 
-        payload.extend(
-            [2, 97, 51, 16] + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)]
-        )
+        payload.extend([2, 97, 51, 16] + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)])
 
         assert len(payload) == 144, f"Payload length error: {len(payload)}, expected 144"
         return payload

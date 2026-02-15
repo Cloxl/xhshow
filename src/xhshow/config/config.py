@@ -56,9 +56,7 @@ class CryptoConfig:
     )
 
     # Default environment check values (normal browser)
-    ENV_CHECKS_DEFAULT: list[int] = field(
-        default_factory=lambda: [0, 1, 18, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0]
-    )
+    ENV_CHECKS_DEFAULT: list[int] = field(default_factory=lambda: [0, 1, 18, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0])
 
     # custom_hash_v2 initial vector
     HASH_IV: tuple[int, int, int, int] = (1831565813, 461845907, 2246822507, 3266489909)
