@@ -96,6 +96,13 @@ class CryptoConfig:
     # Prefix constants
     X3_PREFIX: str = "mns0301_"
     XYS_PREFIX: str = "XYS_"
+    XYW_PREFIX: str = "XYW_"
+
+    # XYW format constants (used by data-fetching APIs to bypass 406)
+    XYW_SIGN_SVN: str = "56"
+    XYW_SIGN_TYPE: str = "x2"
+    XYW_SIGN_VERSION: str = "1"
+    XYW_APP_ID: str = "xhs-pc-web"
 
     # Trace ID generation constants
     HEX_CHARS: str = "abcdef0123456789"
