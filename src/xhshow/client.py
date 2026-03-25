@@ -174,7 +174,7 @@ class Xhshow:
         import base64 as _b64
 
         # Decode the XYS_ signature to get the inner JSON
-        encoded_part = xs_signature[len(self.config.XYS_PREFIX):]
+        encoded_part = xs_signature[len(self.config.XYS_PREFIX) :]
         inner_json = self.crypto_processor.b64encoder.decode(encoded_part)
         inner_data = json.loads(inner_json)
 
@@ -563,7 +563,16 @@ class Xhshow:
         Returns:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
         """
-        return self.sign_headers("GET", uri, cookies, xsec_appid, params=params, timestamp=timestamp, session=session, sign_format=sign_format)
+        return self.sign_headers(
+            "GET",
+            uri,
+            cookies,
+            xsec_appid,
+            params=params,
+            timestamp=timestamp,
+            session=session,
+            sign_format=sign_format,
+        )
 
     def sign_headers_post(
         self,
@@ -591,5 +600,12 @@ class Xhshow:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
         """
         return self.sign_headers(
-            "POST", uri, cookies, xsec_appid, payload=payload, timestamp=timestamp, session=session, sign_format=sign_format
+            "POST",
+            uri,
+            cookies,
+            xsec_appid,
+            payload=payload,
+            timestamp=timestamp,
+            session=session,
+            sign_format=sign_format,
         )
