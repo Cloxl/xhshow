@@ -514,6 +514,9 @@ class Xhshow:
         else:
             raise ValueError(f"Unsupported method: {method}")
 
+        if sign_format not in ("xys", "xyw"):
+            raise ValueError(f"Unsupported sign_format={sign_format!r}; expected 'xys' or 'xyw'")
+
         cookie_dict = self._parse_cookies(cookies)
         a1_value = cookie_dict.get("a1")
         if not a1_value:
