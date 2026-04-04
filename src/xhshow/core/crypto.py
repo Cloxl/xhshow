@@ -8,7 +8,7 @@ from ..utils.bit_ops import BitOperations
 from ..utils.encoder import Base64Encoder
 from ..utils.hex_utils import HexProcessor
 from ..utils.random_gen import RandomGenerator
-from ..utils.url_utils import extract_api_path
+# from ..utils.url_utils import extract_api_path
 
 if TYPE_CHECKING:
     from ..session import SignState
