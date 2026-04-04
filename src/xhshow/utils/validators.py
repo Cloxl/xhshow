@@ -80,13 +80,14 @@ class RequestSignatureValidator:
     @staticmethod
     def validate_cookie(cookie: Any) -> dict[str, Any] | str:
         """Validate cookie parameter"""
-        if cookie is not None and not (isinstance(cookie, dict) or isinstance(cookie, str)):
-            raise TypeError(f"payload must be dict or None, got {type(cookie).__name__}")
-        # detect cookie dict validation
-        if cookie is not None and isinstance(cookie, dict):
+        if cookie is None:
+            raise TypeError("cookie must be dict or str, got None")
+        if not isinstance(cookie, dict | str):
+            raise TypeError(f"cookie must be dict or str, got {type(cookie).__name__}")
+        if isinstance(cookie, dict):
             for key in cookie.keys():
                 if not isinstance(key, str):
-                    raise TypeError(f"payload keys must be str, got {type(key).__name__} for key '{key}'")
+                    raise TypeError(f"cookie keys must be str, got {type(key).__name__} for key '{key}'")
         return cookie
 
 

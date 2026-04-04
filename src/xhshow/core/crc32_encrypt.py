@@ -59,7 +59,8 @@ class CRC32:
             Intermediate CRC state `c` (before final bitwise NOT / XOR).
         """
         cls._ensure_table()
-        assert cls._TABLE is not None  # for type checkers
+        if cls._TABLE is None:
+            raise RuntimeError("CRC32 table initialization failed")
 
         c = cls.MASK32
 
