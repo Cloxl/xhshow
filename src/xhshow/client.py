@@ -160,28 +160,42 @@ class Xhshow:
             json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
         )
 
+    @validate_signature_params
     def sign_xyw(
         self,
         method: Literal["GET", "POST"],
         uri: str,
         a1_value: str,
-        xsec_appid: str,
-        payload: dict[str, Any] | None,
-        timestamp: float | None,
+        xsec_appid: str = "xhs-pc-web",
+        payload: dict[str, Any] | None = None,
+        timestamp: float | None = None,
+        session: Any = None,
     ) -> str:
-        validator = RequestSignatureValidator()
-        validated_uri = extract_uri(validator.validate_uri(uri))
-        validated_method = validator.validate_method(method)
-        validated_a1_value = validator.validate_a1_value(a1_value)
-        validated_xsec_appid = validator.validate_xsec_appid(xsec_appid)
-        validated_payload = validator.validate_payload(payload)
+        """
+        Generate XYW_ signature using AES-128-CBC encryption.
 
-        request_uri = self._build_content_string(validated_method, validated_uri, validated_payload)
+        Required for data-fetching APIs (user_posted, otherinfo, etc.) that reject
+        XYS_ format with HTTP 406. Uses an independent crypto path from sign_xs.
+
+        Args:
+            method: Request method ("GET" or "POST")
+            uri: Request URI or full URL
+            a1_value: a1 value from cookies
+            xsec_appid: Application identifier, defaults to ``xhs-pc-web``
+            payload: Request parameters (GET params or POST body)
+            timestamp: Unix timestamp in seconds (defaults to current time)
+            session: Unused, accepted for decorator compatibility.
+
+        Returns:
+            str: XYW_ format signature string
+        """
+        uri = extract_uri(uri)
+        content_string = self._build_content_string(method, uri, payload)
 
         timestamp_ms = str(self.get_x_t(timestamp))
         payload_hex = build_xyw_payload_hex(
-            full_uri=request_uri,
-            a1_value=validated_a1_value,
+            full_uri=content_string,
+            a1_value=a1_value,
             timestamp_ms=timestamp_ms,
             config=self.config,
         )
@@ -189,7 +203,7 @@ class Xhshow:
         xyw_data = {
             "signSvn": self.config.XYW_SIGN_SVN,
             "signType": self.config.XYW_SIGN_TYPE,
-            "appId": validated_xsec_appid,
+            "appId": xsec_appid,
             "signVersion": self.config.XYW_SIGN_VERSION,
             "payload": payload_hex,
         }
