@@ -268,8 +268,11 @@ S_BOX = (
 RCON = (0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36)
 
 
-def _pkcs7_pad(data: bytes, block_size: int) -> bytes:
-    pad_len = block_size - (len(data) % block_size)
+_AES_BLOCK_SIZE = 16
+
+
+def _pkcs7_pad(data: bytes) -> bytes:
+    pad_len = _AES_BLOCK_SIZE - (len(data) % _AES_BLOCK_SIZE)
     return data + bytes([pad_len]) * pad_len
 
 
@@ -281,8 +284,8 @@ def _sub_word(word: list[int]) -> list[int]:
     return [S_BOX[value] for value in word]
 
 
-def _expand_key(key: bytes, block_size: int) -> list[list[int]]:
-    if len(key) != block_size:
+def _expand_key(key: bytes) -> list[list[int]]:
+    if len(key) != _AES_BLOCK_SIZE:
         raise ValueError("AES-128 requires a 16-byte key")
 
     words = [list(key[index : index + 4]) for index in range(0, len(key), 4)]
@@ -360,25 +363,24 @@ def _encrypt_block(block: bytes, round_keys: Sequence[Sequence[int]]) -> bytes:
 
 
 class XywCipher:
-    def __init__(self, key: bytes, iv: bytes, block_size: int = 16):
-        if len(key) != block_size:
+    def __init__(self, key: bytes, iv: bytes):
+        if len(key) != _AES_BLOCK_SIZE:
             raise ValueError("AES-128 requires a 16-byte key")
-        if len(iv) != block_size:
+        if len(iv) != _AES_BLOCK_SIZE:
             raise ValueError("AES-CBC IV must be 16 bytes")
 
-        self.block_size = block_size
         self.iv = iv
-        self.round_keys = _expand_key(key, block_size)
+        self.round_keys = _expand_key(key)
 
     def encrypt(self, plaintext_bytes: bytes) -> bytes:
-        if len(plaintext_bytes) % self.block_size != 0:
+        if len(plaintext_bytes) % _AES_BLOCK_SIZE != 0:
             raise ValueError("plaintext_bytes must be PKCS#7 padded to a 16-byte boundary")
 
         ciphertext_blocks: list[bytes] = []
         previous_block = self.iv
 
-        for offset in range(0, len(plaintext_bytes), self.block_size):
-            block = plaintext_bytes[offset : offset + self.block_size]
+        for offset in range(0, len(plaintext_bytes), _AES_BLOCK_SIZE):
+            block = plaintext_bytes[offset : offset + _AES_BLOCK_SIZE]
             chained_block = bytes(left ^ right for left, right in zip(block, previous_block, strict=False))
             encrypted_block = _encrypt_block(chained_block, self.round_keys)
             ciphertext_blocks.append(encrypted_block)
@@ -398,7 +400,7 @@ def build_xyw_payload_hex(
     x1 = hashlib.md5(f"url={full_uri}".encode()).hexdigest()
     x2 = env_flags or config.XYW_ENV_FLAGS_DEFAULT
     message = f"x1={x1};x2={x2};x3={a1_value};x4={timestamp_ms};".encode()
-    plaintext = _pkcs7_pad(base64.b64encode(message), config.XYW_AES_BLOCK_SIZE)
+    plaintext = _pkcs7_pad(base64.b64encode(message))
 
-    cipher = XywCipher(config.XYW_AES_KEY, config.XYW_AES_IV, config.XYW_AES_BLOCK_SIZE)
+    cipher = XywCipher(config.XYW_AES_KEY, config.XYW_AES_IV)
     return cipher.encrypt(plaintext).hex()

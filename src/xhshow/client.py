@@ -176,9 +176,7 @@ class Xhshow:
         validated_xsec_appid = validator.validate_xsec_appid(xsec_appid)
         validated_payload = validator.validate_payload(payload)
 
-        request_uri = self._build_content_string("GET", validated_uri, validated_payload)
-        if validated_method == "POST" and validated_payload is None:
-            request_uri = validated_uri
+        request_uri = self._build_content_string(validated_method, validated_uri, validated_payload)
 
         timestamp_ms = str(self.get_x_t(timestamp))
         payload_hex = build_xyw_payload_hex(
