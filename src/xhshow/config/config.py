@@ -103,6 +103,10 @@ class CryptoConfig:
     XYW_SIGN_TYPE: str = "x2"
     XYW_SIGN_VERSION: str = "1"
     XYW_APP_ID: str = "xhs-pc-web"
+    XYW_AES_BLOCK_SIZE: int = 16
+    XYW_AES_KEY: bytes = b"7cc4adla5ay0701v"
+    XYW_AES_IV: bytes = b"4uzjr7mbsibcaldp"
+    XYW_ENV_FLAGS_DEFAULT: str = "0|0|0|1|0|0|1|0|0|0|1|0|0|0|0|1|0|0|1"
 
     # Trace ID generation constants
     HEX_CHARS: str = "abcdef0123456789"

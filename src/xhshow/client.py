@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 import time
@@ -7,10 +8,12 @@ from typing import Any, Literal
 from .config import CryptoConfig
 from .core.common_sign import XsCommonSigner
 from .core.crypto import CryptoProcessor
+from .core.xyw_crypto import build_xyw_payload_hex
 from .session import SessionManager, SignState
 from .utils.random_gen import RandomGenerator
 from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
+    RequestSignatureValidator,
     validate_get_signature_params,
     validate_post_signature_params,
     validate_signature_params,
@@ -157,41 +160,43 @@ class Xhshow:
             json.dumps(signature_data, separators=(",", ":"), ensure_ascii=False)
         )
 
-    def _wrap_xyw(self, xs_signature: str) -> str:
-        """
-        Convert an XYS_ signature to XYW_ format.
+    def sign_xyw(
+        self,
+        method: Literal["GET", "POST"],
+        uri: str,
+        a1_value: str,
+        xsec_appid: str,
+        payload: dict[str, Any] | None,
+        timestamp: float | None,
+    ) -> str:
+        validator = RequestSignatureValidator()
+        validated_uri = extract_uri(validator.validate_uri(uri))
+        validated_method = validator.validate_method(method)
+        validated_a1_value = validator.validate_a1_value(a1_value)
+        validated_xsec_appid = validator.validate_xsec_appid(xsec_appid)
+        validated_payload = validator.validate_payload(payload)
 
-        XHS data-fetching APIs (user_posted, otherinfo, etc.) reject XYS_ format
-        with HTTP 406. The XYW_ format wraps the x3 payload in a JSON envelope
-        that bypasses this check.
+        request_uri = self._build_content_string("GET", validated_uri, validated_payload)
+        if validated_method == "POST" and validated_payload is None:
+            request_uri = validated_uri
 
-        Args:
-            xs_signature: XYS_ format signature string
-
-        Returns:
-            str: XYW_ format signature string
-        """
-        import base64 as _b64
-
-        # Decode the XYS_ signature to get the inner JSON
-        encoded_part = xs_signature[len(self.config.XYS_PREFIX) :]
-        inner_json = self.crypto_processor.b64encoder.decode(encoded_part)
-        inner_data = json.loads(inner_json)
-
-        # Extract the x3 payload (remove the prefix like "mns0301_")
-        x3_value = inner_data.get("x3", "")
-        # Keep full x3 as the payload (including prefix)
-        payload = x3_value
+        timestamp_ms = str(self.get_x_t(timestamp))
+        payload_hex = build_xyw_payload_hex(
+            full_uri=request_uri,
+            a1_value=validated_a1_value,
+            timestamp_ms=timestamp_ms,
+            config=self.config,
+        )
 
         xyw_data = {
             "signSvn": self.config.XYW_SIGN_SVN,
             "signType": self.config.XYW_SIGN_TYPE,
-            "appId": self.config.XYW_APP_ID,
+            "appId": validated_xsec_appid,
             "signVersion": self.config.XYW_SIGN_VERSION,
-            "payload": payload,
+            "payload": payload_hex,
         }
         xyw_json = json.dumps(xyw_data, separators=(",", ":"), ensure_ascii=False)
-        return self.config.XYW_PREFIX + _b64.b64encode(xyw_json.encode()).decode()
+        return self.config.XYW_PREFIX + base64.b64encode(xyw_json.encode("utf-8")).decode("utf-8")
 
     def sign_xs_common(
         self,
@@ -522,11 +527,10 @@ class Xhshow:
         if not a1_value:
             raise ValueError("Missing 'a1' in cookies")
 
-        x_s = self.sign_xs(method_upper, uri, a1_value, xsec_appid, request_data, timestamp, session)
-
-        # Convert to XYW_ format if requested (bypasses HTTP 406 on data APIs)
         if sign_format == "xyw":
-            x_s = self._wrap_xyw(x_s)
+            x_s = self.sign_xyw(method_upper, uri, a1_value, xsec_appid, request_data, timestamp)
+        else:
+            x_s = self.sign_xs(method_upper, uri, a1_value, xsec_appid, request_data, timestamp, session)
 
         x_s_common = self.sign_xs_common(cookie_dict)
         x_t = self.get_x_t(timestamp)
