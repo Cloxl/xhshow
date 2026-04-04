@@ -155,9 +155,8 @@ class CryptoProcessor:
         part11 += [self.config.ENV_TABLE[i] ^ self.config.ENV_CHECKS_DEFAULT[i] for i in range(1, 15)]
         payload.extend(part11)
 
-        api_path = extract_api_path(string_param)
-        api_path_bytes = api_path.encode("utf-8")
-        hex_md5 = hashlib.md5(api_path_bytes).hexdigest()
+        string_param_bytes = string_param.encode("utf-8")
+        hex_md5 = hashlib.md5(string_param_bytes).hexdigest()
         md5_path_bytes = [int(hex_md5[i : i + 2], 16) for i in range(0, 32, 2)]
 
         payload.extend(self.config.A3_PREFIX + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)])

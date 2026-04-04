@@ -142,7 +142,7 @@ class Xhshow:
         content_string = self._build_content_string(method, uri, payload)
         d_value = self._generate_d_value(content_string)
 
-        sign_state = session.get_current_state(uri) if session else None
+        sign_state = session.get_current_state(content_string) if session else None
 
         payload_array = self.crypto_processor.build_payload_array(
             d_value, a1_value, xsec_appid, content_string, timestamp, sign_state=sign_state

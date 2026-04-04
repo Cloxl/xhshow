@@ -13,8 +13,8 @@ class CryptoConfig:
     GID_URL = "https://as.xiaohongshu.com/api/sec/v1/shield/webprofile"
     DATA_PALTFORM = "Windows"
     DATA_SVN = "2"
-    DATA_SDK_VERSION = "4.2.6"
-    DATA_webBuild = "5.0.3"
+    DATA_SDK_VERSION = "4.3.3"
+    DATA_webBuild = "6.3.0"
 
     # Bitwise operation constants
     MAX_32BIT: int = 0xFFFFFFFF
@@ -113,7 +113,7 @@ class CryptoConfig:
             "s0": 5,
             "s1": "",
             "x0": "1",
-            "x1": "4.2.6",
+            "x1": "4.3.3",
             "x2": "Windows",
             "x3": "xhs-pc-web",
             "x4": "4.86.0",
