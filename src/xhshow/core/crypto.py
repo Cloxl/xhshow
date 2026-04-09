@@ -1,4 +1,3 @@
-import hashlib
 import struct
 import time
 from typing import TYPE_CHECKING
