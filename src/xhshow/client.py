@@ -96,7 +96,7 @@ class Xhshow:
             str: Base64 encoded signature
         """
         payload_array = self.crypto_processor.build_payload_array(
-            d_value, a1_value, xsec_appid, string_param, timestamp
+            d_value, d_value, a1_value, xsec_appid, string_param, timestamp
         )
 
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
@@ -141,11 +141,12 @@ class Xhshow:
         uri = extract_uri(uri)
         content_string = self._build_content_string(method, uri, payload)
         d_value = self._generate_d_value(content_string)
+        m_value = d_value if method == "GET" else hashlib.md5(uri.encode("utf-8")).hexdigest()
 
         sign_state = session.get_current_state(content_string) if session else None
 
         payload_array = self.crypto_processor.build_payload_array(
-            d_value, a1_value, xsec_appid, content_string, timestamp, sign_state=sign_state
+            d_value, m_value, a1_value, xsec_appid, content_string, timestamp, sign_state=sign_state
         )
         xor_result = self.crypto_processor.bit_ops.xor_transform_array(payload_array)
         x3_signature = self.crypto_processor.b64encoder.encode_x3(xor_result[: self.config.PAYLOAD_LENGTH])
