@@ -15,7 +15,7 @@ class TestCryptoProcessor:
         hex_param = "d41d8cd98f00b204e9800998ecf8427e"
         a1_value = "test_a1_value"
 
-        result = self.crypto.build_payload_array(hex_param, a1_value)
+        result = self.crypto.build_payload_array(hex_param, hex_param, a1_value)
 
         assert isinstance(result, list)
         assert len(result) > 50

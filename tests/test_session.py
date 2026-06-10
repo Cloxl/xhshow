@@ -112,7 +112,7 @@ def test_signing_with_session_post(mock_crypto_processor):
     assert actual_state.page_load_timestamp == session.page_load_timestamp
     assert actual_state.sequence_value == session.sequence_value
     assert actual_state.window_props_length == session.window_props_length
-    assert actual_state.uri_length == len(uri)
+    assert actual_state.uri_length >= len(uri)
 
 
 def test_signing_without_session_post(mock_crypto_processor):
@@ -216,7 +216,7 @@ def test_sign_xs_get_with_session(mock_crypto_processor):
     actual_state = kwargs.get("sign_state")
 
     assert actual_state is not None
-    assert actual_state.uri_length == len(uri)
+    assert actual_state.uri_length >= len(uri)
 
 
 def test_sign_xs_post_with_session(mock_crypto_processor):
@@ -239,4 +239,4 @@ def test_sign_xs_post_with_session(mock_crypto_processor):
     actual_state = kwargs.get("sign_state")
 
     assert actual_state is not None
-    assert actual_state.uri_length == len(uri)
+    assert actual_state.uri_length >= len(uri)

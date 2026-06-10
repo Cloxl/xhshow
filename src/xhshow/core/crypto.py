@@ -1,4 +1,3 @@
-import hashlib
 import struct
 import time
 from typing import TYPE_CHECKING
@@ -8,7 +7,6 @@ from ..utils.bit_ops import BitOperations
 from ..utils.encoder import Base64Encoder
 from ..utils.hex_utils import HexProcessor
 from ..utils.random_gen import RandomGenerator
-from ..utils.url_utils import extract_api_path
 
 if TYPE_CHECKING:
     from ..session import SignState
@@ -82,6 +80,7 @@ class CryptoProcessor:
     def build_payload_array(
         self,
         hex_parameter: str,
+        hex_md5_path: str,
         a1_value: str,
         app_identifier: str = "xhs-pc-web",
         string_param: str = "",
@@ -93,6 +92,7 @@ class CryptoProcessor:
 
         Args:
             hex_parameter (str): 32-character hexadecimal parameter (MD5 hash of uri+data)
+            hex_md5_path (str): 32-character hexadecimal parameter (MD5 hash of url+queryparams)
             a1_value (str): a1 value from cookies
             app_identifier (str): Application identifier, default "xhs-pc-web"
             string_param (str): String parameter (URI+data for MD5 and length calculation)
@@ -155,10 +155,7 @@ class CryptoProcessor:
         part11 += [self.config.ENV_TABLE[i] ^ self.config.ENV_CHECKS_DEFAULT[i] for i in range(1, 15)]
         payload.extend(part11)
 
-        api_path = extract_api_path(string_param)
-        api_path_bytes = api_path.encode("utf-8")
-        hex_md5 = hashlib.md5(api_path_bytes).hexdigest()
-        md5_path_bytes = [int(hex_md5[i : i + 2], 16) for i in range(0, 32, 2)]
+        md5_path_bytes = [int(hex_md5_path[i : i + 2], 16) for i in range(0, 32, 2)]
 
         payload.extend(self.config.A3_PREFIX + [b ^ seed_byte for b in self._custom_hash_v2(ts_bytes + md5_path_bytes)])
 
