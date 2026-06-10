@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m ruff check .)",
+      "Bash(python -m mypy src/)",
+      "Bash(where ruff:*)",
+      "Bash(where mypy:*)",
+      "Bash(pip show:*)",
+      "Bash(E:/software/python/Scripts/ruff.exe check:*)",
+      "Bash(E:/software/python/Scripts/ruff.exe format:*)",
+      "Bash(python -c \"import pytest; pytest.main\\(['--tb=no', '-q']\\)\")",
+      "Bash(E:/software/python/Scripts/pytest.exe --tb=no -q)",
+      "Bash(python -m pytest --tb=no -q --co)",
+      "Bash(python -m pytest --tb=no -q)",
+      "Bash(python -m pytest --tb=no -q --cov=src/xhshow --cov-report=term-missing)",
+      "Bash(python -c ':*)"
+    ]
+  }
+}

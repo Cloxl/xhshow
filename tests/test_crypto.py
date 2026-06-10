@@ -1,3 +1,6 @@
+import base64
+import json
+
 import pytest
 
 from xhshow import CryptoProcessor, Xhshow
@@ -619,6 +622,50 @@ class TestIntegration:
         )
 
         assert headers_ts["x-t"] == str(int(custom_ts * 1000))
+
+    def test_sign_xyw(self):
+        client = Xhshow()
+
+        signature = client.sign_xyw(
+            method="GET",
+            uri="/api/sns/web/v1/user_posted",
+            a1_value="a" * 52,
+            xsec_appid="custom-app-id",
+            payload={"num": "30", "cursor": ""},
+            timestamp=1764896636.081,
+        )
+
+        assert signature.startswith("XYW_")
+
+        decoded = base64.b64decode(signature[len("XYW_") :]).decode("utf-8")
+        sign_data = json.loads(decoded)
+
+        assert sign_data["signSvn"] == "56"
+        assert sign_data["signType"] == "x2"
+        assert sign_data["signVersion"] == "1"
+        assert sign_data["appId"] == "custom-app-id"
+        assert len(sign_data["payload"]) == 416
+        int(sign_data["payload"], 16)
+
+    def test_sign_headers_xyw(self):
+        import time
+
+        client = Xhshow()
+        cookies = {"a1": "test_a1_value", "web_session": "test_session"}
+        timestamp = time.time()
+
+        headers = client.sign_headers(
+            method="GET",
+            uri="/api/sns/web/v1/user_posted",
+            cookies=cookies,
+            params={"num": "30", "cursor": "", "user_id": "123"},
+            timestamp=timestamp,
+            sign_format="xyw",
+        )
+
+        assert headers["x-s"].startswith("XYW_")
+        assert headers["x-s-common"]
+        assert headers["x-t"] == str(int(timestamp * 1000))
 
     def test_sign_headers_parameter_validation(self):
         """测试 sign_headers 参数验证"""
