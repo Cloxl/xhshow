@@ -8,9 +8,11 @@ from typing import Any, Literal
 from .config import CryptoConfig
 from .core.common_sign import XsCommonSigner
 from .core.crypto import CryptoProcessor
+from .core.xrap import x_rap_param
 from .core.xyw_crypto import build_xyw_payload_hex
 from .session import SessionManager, SignState
 from .utils.random_gen import RandomGenerator
+from .utils.sharding import get_sharding_key
 from .utils.url_utils import build_url, extract_uri
 from .utils.validators import (
     validate_get_signature_params,
@@ -423,6 +425,66 @@ class Xhshow:
         """
         return self.random_generator.generate_xray_trace_id(timestamp, seq)
 
+    def get_search_id(self) -> str:
+        """
+        Generate search_id for search endpoint requests
+
+        Returns:
+            str: Base36 encoded search ID
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.get_search_id()
+            '2bzhtisx9gp4rnrufbcyn'
+        """
+        return self.random_generator.generate_search_id()
+
+    def get_search_request_id(self) -> str:
+        """
+        Generate search request_id for search endpoint requests
+
+        Returns:
+            str: Format "{random}-{timestamp_ms}"
+
+        Examples:
+            >>> client = Xhshow()
+            >>> client.get_search_request_id()
+            '1234567890-1764902784843'
+        """
+        return self.random_generator.generate_search_request_id()
+
+    @staticmethod
+    def generate_a1() -> str:
+        """
+        Generate a1 cookie value
+
+        Returns:
+            str: 52-character a1 cookie value
+
+        Examples:
+            >>> a1 = Xhshow.generate_a1()
+            >>> len(a1)
+            52
+        """
+        return RandomGenerator.generate_a1()
+
+    @staticmethod
+    def generate_web_id(a1: str) -> str:
+        """
+        Generate web_id from a1 cookie value
+
+        Args:
+            a1: a1 cookie value
+
+        Returns:
+            str: 32-character hex web_id
+
+        Examples:
+            >>> Xhshow.generate_web_id("19ab1e5ce48c3b3c5c50e2c040a801cfcca0a4ac50000571046")
+            'e4b89785b2150758e1a37b5c72ef91b5'
+        """
+        return RandomGenerator.generate_web_id(a1)
+
     def get_x_t(self, timestamp: float | None = None) -> int:
         """
         Generate x-t header value (Unix timestamp in milliseconds)
@@ -473,6 +535,8 @@ class Xhshow:
         timestamp: float | None = None,
         session: SessionManager | None = None,
         sign_format: Literal["xys", "xyw"] = "xys",
+        user_id: str | None = None,
+        x_rap: bool = False,
     ) -> dict[str, str]:
         """
         Generate complete request headers with signature and trace IDs
@@ -490,6 +554,10 @@ class Xhshow:
                 - "xys": Traditional XYS_ format (default, works for non-data APIs)
                 - "xyw": XYW_ format (required for data-fetching APIs like user_posted
                   which reject XYS_ with HTTP 406 since ~March 2026)
+            user_id: Optional user ID for xy-direction sharding. If provided,
+                computes sharding key from user_id; otherwise uses random value.
+            x_rap: Whether to generate x-rap-param header. Required for
+                feed, search, and note publishing endpoints.
 
         Returns:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
@@ -505,15 +573,14 @@ class Xhshow:
             ...     params={"num": "30"},
             ...     sign_format="xyw"
             ... )
-            >>> # POST request
+            >>> # POST request with x-rap-param
             >>> headers = client.sign_headers(
             ...     method="POST",
-            ...     uri="/api/sns/web/v1/login",
+            ...     uri="/api/sns/web/v1/feed",
             ...     cookies=cookies,
-            ...     payload={"username": "test"}
+            ...     payload={"source_note_id": "..."},
+            ...     x_rap=True
             ... )
-            >>> headers.keys()
-            dict_keys(['x-s', 'x-s-common', 'x-t', 'x-b3-traceid', 'x-xray-traceid'])
         """
         if timestamp is None:
             timestamp = time.time()
@@ -549,13 +616,23 @@ class Xhshow:
         x_b3_traceid = self.get_b3_trace_id()
         x_xray_traceid = self.get_xray_trace_id(timestamp=int(timestamp * 1000))
 
-        return {
+        headers = {
             "x-s": x_s,
             "x-s-common": x_s_common,
             "x-t": str(x_t),
             "x-b3-traceid": x_b3_traceid,
             "x-xray-traceid": x_xray_traceid,
+            "x-mns": "unload",
+            "xy-direction": str(get_sharding_key(user_id)),
         }
+
+        if x_rap:
+            rap_uri = extract_uri(uri)
+            rap_api = "//edith.xiaohongshu.com" + rap_uri
+            rap_data = request_data or {}
+            headers["x-rap-param"] = x_rap_param(rap_api, rap_data)
+
+        return headers
 
     def sign_headers_get(
         self,
@@ -566,6 +643,8 @@ class Xhshow:
         timestamp: float | None = None,
         session: SessionManager | None = None,
         sign_format: Literal["xys", "xyw"] = "xys",
+        user_id: str | None = None,
+        x_rap: bool = False,
     ) -> dict[str, str]:
         """
         Generate complete request headers for GET request (convenience method)
@@ -578,6 +657,8 @@ class Xhshow:
             timestamp: Unix timestamp in seconds (defaults to current time)
             session: Optional session manager for stateful signing.
             sign_format: "xys" (default) or "xyw" (for data APIs that reject XYS_ with 406)
+            user_id: Optional user ID for xy-direction sharding.
+            x_rap: Whether to generate x-rap-param header.
 
         Returns:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
@@ -591,6 +672,8 @@ class Xhshow:
             timestamp=timestamp,
             session=session,
             sign_format=sign_format,
+            user_id=user_id,
+            x_rap=x_rap,
         )
 
     def sign_headers_post(
@@ -602,6 +685,8 @@ class Xhshow:
         timestamp: float | None = None,
         session: SessionManager | None = None,
         sign_format: Literal["xys", "xyw"] = "xys",
+        user_id: str | None = None,
+        x_rap: bool = False,
     ) -> dict[str, str]:
         """
         Generate complete request headers for POST request (convenience method)
@@ -614,6 +699,8 @@ class Xhshow:
             timestamp: Unix timestamp in seconds (defaults to current time)
             session: Optional session manager for stateful signing.
             sign_format: "xys" (default) or "xyw" (for data APIs that reject XYS_ with 406)
+            user_id: Optional user ID for xy-direction sharding.
+            x_rap: Whether to generate x-rap-param header.
 
         Returns:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
@@ -627,4 +714,6 @@ class Xhshow:
             timestamp=timestamp,
             session=session,
             sign_format=sign_format,
+            user_id=user_id,
+            x_rap=x_rap,
         )

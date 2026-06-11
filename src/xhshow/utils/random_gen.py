@@ -1,9 +1,25 @@
+import binascii
+import hashlib
+import math
 import random
 import time
 
 from ..config import CryptoConfig
 
 __all__ = ["RandomGenerator"]
+
+_BASE36_CHARS = "0123456789abcdefghijklmnopqrstuvwxyz"
+_A1_CHARSET = "abcdefghijklmnopqrstuvwxyz1234567890"
+
+
+def _int_to_base36(value: int) -> str:
+    if value == 0:
+        return "0"
+    result = ""
+    while value:
+        value, remainder = divmod(value, 36)
+        result = _BASE36_CHARS[remainder] + result
+    return result
 
 
 class RandomGenerator:
@@ -80,3 +96,56 @@ class RandomGenerator:
         part2 = "".join(random.choice(self.config.HEX_CHARS) for _ in range(self.config.XRAY_TRACE_ID_PART2_LENGTH))
 
         return part1 + part2
+
+    @staticmethod
+    def generate_random_ascii(length: int, charset: str = "abcdefghijklmnopqrstuvwxyz0123456789") -> str:
+        return "".join(random.choice(charset) for _ in range(length))
+
+    @staticmethod
+    def generate_a1() -> str:
+        """
+        Generate a1 cookie value
+
+        Returns:
+            str: 52-character a1 value
+        """
+        ts_hex = hex(int(time.time() * 1000))[2:]
+        random_str = "".join(random.choices(_A1_CHARSET, k=30))
+        a_part = ts_hex + random_str + "5" + "0" + "000"
+        crc = binascii.crc32(a_part.encode()) & 0xFFFFFFFF
+        return (a_part + str(crc))[:52]
+
+    @staticmethod
+    def generate_web_id(a1: str) -> str:
+        """
+        Generate web_id from a1 cookie value
+
+        Args:
+            a1: a1 cookie value
+
+        Returns:
+            str: 32-character hex MD5 hash
+        """
+        return hashlib.md5(a1.encode()).hexdigest()
+
+    def generate_search_id(self) -> str:
+        """
+        Generate search_id for search endpoints
+
+        Returns:
+            str: Base36 encoded string from (timestamp_ms << 64) + random
+        """
+        timestamp_ms = int(time.time() * 1000)
+        random_part = math.ceil(0x7FFFFFFE * random.random())
+        return _int_to_base36((timestamp_ms << 64) + random_part)
+
+    def generate_search_request_id(self) -> str:
+        """
+        Generate search request_id for search endpoints
+
+        Returns:
+            str: Format "{random}-{timestamp_ms}"
+        """
+        timestamp_ms = int(time.time() * 1000)
+        random_part = math.ceil(0x7FFFFFFE * random.random())
+        return f"{random_part}-{timestamp_ms}"
