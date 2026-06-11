@@ -13,7 +13,7 @@ class CryptoConfig:
     GID_URL = "https://as.xiaohongshu.com/api/sec/v1/shield/webprofile"
     DATA_PALTFORM = "Windows"
     DATA_SVN = "2"
-    DATA_SDK_VERSION = "4.3.3"
+    DATA_SDK_VERSION = "4.3.5"
     DATA_webBuild = "6.3.0"
 
     # Bitwise operation constants
@@ -85,11 +85,11 @@ class CryptoConfig:
     # Signature data template
     SIGNATURE_DATA_TEMPLATE: dict[str, str] = field(
         default_factory=lambda: {
-            "x0": "4.2.6",
+            "x0": "4.3.5",
             "x1": "xhs-pc-web",
             "x2": "Windows",
             "x3": "",
-            "x4": "",
+            "x4": "object",
         }
     )
 
@@ -117,12 +117,15 @@ class CryptoConfig:
     # b1 secret key
     B1_SECRET_KEY: str = "xhswebmplfbt"
 
+    # x-rap-param protocol version
+    XRAP_SDK_VERSION: int = 10300
+
     SIGNATURE_XSCOMMON_TEMPLATE: dict[str, Any] = field(
         default_factory=lambda: {
             "s0": 5,
             "s1": "",
             "x0": "1",
-            "x1": "4.3.3",
+            "x1": "4.3.5",
             "x2": "Windows",
             "x3": "xhs-pc-web",
             "x4": "4.86.0",
