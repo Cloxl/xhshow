@@ -664,9 +664,16 @@ class Xhshow:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
         """
         return self.sign_headers(
-            "GET", uri, cookies, xsec_appid,
-            params=params, timestamp=timestamp, session=session,
-            sign_format=sign_format, user_id=user_id, x_rap=x_rap,
+            "GET",
+            uri,
+            cookies,
+            xsec_appid,
+            params=params,
+            timestamp=timestamp,
+            session=session,
+            sign_format=sign_format,
+            user_id=user_id,
+            x_rap=x_rap,
         )
 
     def sign_headers_post(
@@ -699,7 +706,14 @@ class Xhshow:
             dict: Complete headers including x-s, x-s-common, x-t, x-b3-traceid, x-xray-traceid
         """
         return self.sign_headers(
-            "POST", uri, cookies, xsec_appid,
-            payload=payload, timestamp=timestamp, session=session,
-            sign_format=sign_format, user_id=user_id, x_rap=x_rap,
+            "POST",
+            uri,
+            cookies,
+            xsec_appid,
+            payload=payload,
+            timestamp=timestamp,
+            session=session,
+            sign_format=sign_format,
+            user_id=user_id,
+            x_rap=x_rap,
         )

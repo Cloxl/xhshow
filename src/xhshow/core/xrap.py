@@ -107,8 +107,6 @@ def _to_compact_json(data: Mapping[str, Any] | str | bytes | bytearray) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
 
-
-
 # --- TLV field writers for the body structure ---
 
 
@@ -126,7 +124,6 @@ def _field_u64(tag: int, val: int) -> bytes:
 
 def _field_blob(tag: int, data: bytes) -> bytes:
     return struct.pack(">HI", tag, len(data)) + data
-
 
 
 # --- Block cipher (SM4-variant with custom S-box and round keys) ---
