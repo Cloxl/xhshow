@@ -193,6 +193,10 @@ uv build                                                 # 构建
 
 如果您有任何功能建议或想法，欢迎在 [#60](https://github.com/Cloxl/xhshow/issues/60) 中提交。我们期待您的宝贵建议，共同打造更好的 xhshow！
 
+## 社区
+
+本项目分享于 [LINUX DO](https://linux.do) —— 真诚、友善、团结、专业的技术社区。欢迎来逛逛。
+
 ## License
 
 [MIT](LICENSE)
